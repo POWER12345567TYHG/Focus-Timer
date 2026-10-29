@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sequence Canvas — Storyboard Sketchbook</title>
+<style>
+:root{--ink:#171717;--muted:#686868;--line:#d8d8d4;--paper:#fbfbf8;--panel:#f2f2ee;--white:#fff;--shadow:0 8px 22px rgba(0,0,0,.08)}
+*{box-sizing:border-box}
+body{margin:0;background:#efefeb;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input{font:inherit}
+button{cursor:pointer;color:inherit}
+.app{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr)}
+.sidebar{background:#f8f8f4;border-right:1px solid #d6d6d0;padding:22px 16px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;gap:11px;align-items:center;padding:0 7px 18px;border-bottom:1px solid var(--line)}
+.brandmark{width:34px;height:34px;border:1.5px solid var(--ink);border-radius:4px;display:grid;place-items:center}
+.brandmark svg{width:24px;height:24px}
+.brand h1{font-size:15px;letter-spacing:-.4px;margin:0;font-weight:750}
+.brand p{font-size:10px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);margin:3px 0 0}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:0 7px;margin-bottom:9px}
+.section-head h2,.tool-head{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#686862;margin:0;font-weight:750}
+.icon-btn{border:1px solid var(--line);background:var(--white);border-radius:7px;width:30px;height:30px;display:grid;place-items:center;font-size:18px}
+.sequence-list{display:flex;flex-direction:column;gap:5px}
+.sequence{display:flex;align-items:center;gap:9px;padding:10px 9px;border:1px solid transparent;background:transparent;border-radius:7px;text-align:left;width:100%;font-size:12px}
+.sequence:hover{background:#ededE8}
+.sequence.active{background:#e7e7e1;border-color:#d2d2cb}
+.seq-number{font-size:10px;color:#777;min-width:23px;height:23px;border:1px solid #c9c9c1;border-radius:50%;display:grid;place-items:center;background:#fafaf7}
+.seq-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.seq-actions{display:none;gap:2px}
+.sequence:hover .seq-actions,.sequence.active .seq-actions{display:flex}
+.seq-actions button{border:0;background:transparent;padding:2px;color:#777;font-size:13px}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:16px;color:#666;font-size:11px;line-height:1.6}
+.main{min-width:0;padding:22px clamp(16px,3vw,42px) 34px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.project{display:flex;align-items:center;gap:12px}
+.project h2{margin:0;font-size:20px;letter-spacing:-.7px}
+.project small{display:block;color:#74746d;font-size:11px;margin-top:4px}
+.top-actions{display:flex;gap:7px;flex-wrap:wrap}
+.btn{border:1px solid #c9c9c2;background:#fff;border-radius:7px;padding:9px 12px;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover{background:#f0f0eb}
+.btn.primary{background:#202020;color:white;border-color:#202020}
+.btn.primary:hover{background:#3a3a3a}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:18px;align-items:start}
+.drawing-area{min-width:0}
+.canvas-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.canvas-title{font-size:13px;font-weight:750}
+.canvas-meta{font-size:11px;color:#777}
+.paper-wrap{position:relative;background:var(--paper);border:1px solid #cfcfc8;border-radius:5px;box-shadow:var(--shadow);padding:10px;overflow:hidden}
+.paper-wrap:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(#00000009 .6px,transparent .6px);background-size:7px 7px;opacity:.18}
+#drawCanvas{display:block;width:100%;height:min(63vh,650px);min-height:360px;background:transparent;touch-action:none;position:relative;cursor:crosshair}
+.canvas-corner{position:absolute;left:20px;top:18px;font:10px ui-monospace,monospace;color:#a0a099;pointer-events:none}
+.canvas-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#777;font-size:10px;padding:11px 2px 0}
+.tools{background:#f8f8f4;border:1px solid #d8d8d1;border-radius:8px;padding:15px;display:flex;flex-direction:column;gap:17px}
+.tool-head{margin-bottom:9px}
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tool{border:1px solid #d3d3cc;border-radius:6px;background:white;padding:9px 6px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px}
+.tool.active{background:#e3e3dc;border-color:#a7a79e;box-shadow:inset 0 0 0 1px #bdbdb4}
+.tool svg{width:16px;height:16px}
+.control-label{display:flex;justify-content:space-between;font-size:11px;color:#5e5e58;margin-bottom:7px}
+input[type=range]{width:100%;accent-color:#222}
+.colors{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{width:23px;height:23px;border-radius:50%;border:1px solid #c5c5bf;background:#fff;padding:0}
+.swatch.active{outline:2px solid #333;outline-offset:2px}
+.swatch.black{background:#171717}.swatch.gray{background:#777}.swatch.red{background:#c8463c}.swatch.blue{background:#3c6ec8}
+.note{font-size:10px;line-height:1.55;color:#777}
+.empty-state{display:none;text-align:center;padding:32px 16px;color:#666}
+.status{font-size:10px;color:#74746d}
+.manifesto{margin-top:18px;border-top:1px solid var(--line);padding-top:14px;display:flex;gap:12px;align-items:center;color:#777;font-size:11px}
+.manifesto svg{width:48px;min-width:48px;height:58px}
+.manifesto strong{display:block;color:#30302c;font-size:11px;margin-bottom:3px}
+.modal-backdrop{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal-backdrop.open{display:flex}
+.modal{width:min(420px,100%);background:#fafaf7;border:1px solid #c9c9c2;border-radius:10px;padding:22px;box-shadow:0 20px 60px #0003}
+.modal h3{margin:0 0 7px;font-size:18px}
+.modal p{margin:0 0 17px;color:#6d6d66;font-size:12px;line-height:1.5}
+.modal input{width:100%;padding:11px;border:1px solid #c8c8c1;border-radius:6px;background:white;margin-bottom:15px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px}
+@media(max-width:900px){.app{grid-template-columns:205px minmax(0,1fr)}.workspace{grid-template-columns:1fr}.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.tool-group{min-width:0}.manifesto{display:none}}
+@media(max-width:620px){.app{display:block}.sidebar{border-right:0;border-bottom:1px solid var(--line);padding:14px}.brand{padding-bottom:12px}.sidebar .tool-head,.sidebar-bottom{display:none}.sequence-list{flex-direction:row;overflow-x:auto}.sequence{min-width:140px}.sidebar section{margin:0}.main{padding:18px 12px}.project h2{font-size:17px}#drawCanvas{height:55vh;min-height:300px}.tools{grid-template-columns:1fr 1fr}.top-actions .btn{padding:8px;font-size:11px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brandmark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5" width="24" height="22" rx="1"/><path d="M4 11h24M10 5v6M17 5v6M24 5v6M8 16l5 5 4-4 6 5"/></svg></div>
+      <div><h1>Sequence Canvas</h1><p>Storyboard sketchbook</p></div>
+    </div>
+    <section>
+      <div class="section-head"><h2>Sequences</h2><button class="icon-btn" id="addSequence" title="Add sequence" aria-label="Add sequence">+</button></div>
+      <div class="sequence-list" id="sequenceList"></div>
+    </section>
+    <div class="sidebar-bottom">A quiet space for rough ideas.<br>Sketch first. Refine in Premiere Pro.<br><span id="saveStatus">Saved in this browser</span></div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="project"><div><h2 id="projectTitle">Untitled Storyboard</h2><small>Draw the next sequence, one idea at a time.</small></div></div>
+      <div class="top-actions">
+        <button class="btn" id="renameProject">✎ Rename project</button>
+        <button class="btn" id="undoBtn" disabled>↶ Undo</button>
+        <button class="btn" id="redoBtn" disabled>↷ Redo</button>
+        <button class="btn" id="exportPng">⇩ Export PNG</button>
+        <button class="btn primary" id="exportAll">Export all</button>
+      </div>
+    </div>
+    <div class="workspace">
+      <section class="drawing-area">
+        <div class="canvas-head">
+          <div><div class="canvas-title" id="activeSequenceTitle">01 — Sequence 01</div><div class="canvas-meta" id="canvasMeta">Free canvas · landscape</div></div>
+          <div class="status" id="canvasStatus">Ready to sketch</div>
+        </div>
+        <div class="paper-wrap">
+          <span class="canvas-corner" id="canvasCorner">SEQ. 01 / STUDY</span>
+          <canvas id="drawCanvas" width="1400" height="900" aria-label="Storyboard drawing canvas"></canvas>
+        </div>
+        <div class="canvas-foot"><span>Mouse or stylus to draw · Shift-drag for straight lines</span><span>Sketches save automatically in this browser</span></div>
+        <div class="empty-state" id="emptyState">Add a sequence to begin sketching.</div>
+      </section>
+      <aside class="tools">
+        <div class="tool-group">
+          <div class="tool-head">Drawing tools</div>
+          <div class="tool-grid">
+            <button class="tool active" data-tool="pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m4 20 4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z"/><path d="m14.5 6.5 3 3"/></svg>Pen</button>
+            <button class="tool" data-tool="eraser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m3 15 9-10a2 2 0 0 1 3 0l6 6-9 10H7l-4-4a2 2 0 0 1 0-2Z"/><path d="m10 21 7-8"/></svg>Eraser</button>
+            <button class="tool" data-tool="line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20 20 4"/><path d="M12 4h8v8"/></svg>Line</button>
+            <button class="tool" data-tool="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20 20 4M10 4h10v10"/></svg>Arrow</button>
+            <button class="tool" data-tool="rect"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="14" rx="1"/></svg>Rectangle</button>
+            <button class="tool" data-tool="ellipse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="12" rx="8" ry="7"/></svg>Ellipse</button>
+          </div>
+        </div>
+        <div class="tool-group">
+          <div class="tool-head">Ink</div>
+          <div class="colors" id="colors">
+            <button class="swatch active" data-color="#171717" aria-label="Black"></button>
+            <button class="swatch gray" data-color="#777777" aria-label="Gray"></button>
+            <button class="swatch" data-color="#ffffff" aria-label="White"></button>
+            <button class="swatch red" data-color="#c8463c" aria-label="Red"></button>
+            <button class="swatch blue" data-color="#3c6ec8" aria-label="Blue"></button>
+          </div>
+        </div>
+        <div class="tool-group">
+          <div class="control-label"><label for="sizeRange">Brush size</label><span id="sizeValue">3 px</span></div>
+          <input type="range" id="sizeRange" min="1" max="18" value="3">
+        </div>
+        <div class="tool-group">
+          <div class="control-label"><label for="opacityRange">Ink opacity</label><span id="opacityValue">100%</span></div>
+          <input type="range" id="opacityRange" min="10" max="100" value="100">
+        </div>
+        <div class="tool-group">
+          <div class="tool-head">Canvas</div>
+          <div class="tool-grid">
+            <button class="tool" id="clearCanvas">⌫ Clear</button>
+            <button class="tool" id="fitCanvas">↔ Fit view</button>
+          </div>
+        </div>
+        <div class="tool-group">
+          <div class="tool-head">Sequence</div>
+          <div class="tool-grid">
+            <button class="tool" id="renameSequence">✎ Rename</button>
+            <button class="tool" id="duplicateSequence">▣ Duplicate</button>
+            <button class="tool" id="moveLeft">← Move</button>
+            <button class="tool" id="moveRight">Move →</button><button class="tool" id="deleteSequence" style="grid-column:1 / -1;border-color:#d8aaa5;color:#a52f26">Delete canvas</button>
+          </div>
+        </div>
+        <div class="note">Tip: use separate sequences for each scene, shot idea, or possible direction. Export a PNG to drop a sketch into your editing notes.</div>
+      </aside>
+    </div>
+    <div class="manifesto">
+      <svg viewBox="0 0 64 76" fill="none" stroke="#292929" stroke-width="1.4"><circle cx="32" cy="10" r="7"/><path d="M32 17 31 38 19 52 18 71M31 38 44 52 46 71M21 23 8 35M42 23 56 35M23 21 41 21M24 39 39 39M23 51 42 51"/><path d="M28 4 32 10 36 4M25 30l6 5 6-5"/></svg>
+      <div><strong>Draw the thought before it disappears.</strong> This is your rough-space canvas — imperfect lines are welcome. Use it to find the composition, movement, and feeling before building the sequence in Premiere Pro.</div>
+    </div>
+  </main>
+</div>
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">Name this sequence</h3><p id="modalDescription">Give this canvas a short name you can recognize later.</p>
+    <input id="modalInput" maxlength="80" placeholder="e.g. Opening reveal">
+    <div class="modal-actions"><button class="btn" id="modalCancel">Cancel</button><button class="btn primary" id="modalSave">Save</button></div>
+  </div>
+</div>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const canvas = $('drawCanvas'), ctx = canvas.getContext('2d');
+const STORAGE_KEY = 'sequence-canvas-v1';
+let project = {title:'Untitled Storyboard',activeId:'s1',sequences:[{id:'s1',name:'Sequence 01',data:null}]};
+let tool='pen', color='#171717', brushSize=3, opacity=1, drawing=false, start=null, last=null, preview=null;
+let undoStack=[], redoStack=[], modalAction=null, lastSaveTimer=null;
+function load(){try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const p=JSON.parse(raw);if(p&&Array.isArray(p.sequences)&&p.sequences.length){project=p;if(!project.sequences.some(s=>s.id===project.activeId))project.activeId=project.sequences[0].id;}}}catch(e){}}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(project));$('saveStatus').textContent='Saved in this browser';}catch(e){$('saveStatus').textContent='Storage full — export your work';}}
+function scheduleSave(){ $('saveStatus').textContent='Saving…';clearTimeout(lastSaveTimer);lastSaveTimer=setTimeout(save,180);}
+function active(){return project.sequences.find(s=>s.id===project.activeId)||project.sequences[0]}
+function getSnapshot(){return canvas.toDataURL('image/png')}
+function pushUndo(){undoStack.push(getSnapshot());if(undoStack.length>40)undoStack.shift();redoStack=[];updateHistoryButtons()}
+function updateHistoryButtons(){$('undoBtn').disabled=!undoStack.length;$('redoBtn').disabled=!redoStack.length}
+function drawWhite(){ctx.save();ctx.globalCompositeOperation='source-over';ctx.fillStyle='#fbfbf8';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.restore()}
+function restoreImage(data){if(!data){drawWhite();return}const img=new Image();img.onload=()=>{drawWhite();ctx.drawImage(img,0,0,canvas.width,canvas.height)};img.src=data}
+function loadSequence(){undoStack=[];redoStack=[];updateHistoryButtons();restoreImage(active()?.data);renderSequences();updateHeader();$('canvasStatus').textContent='Ready to sketch'}
+function renderSequences(){const list=$('sequenceList');list.innerHTML='';project.sequences.forEach((s,i)=>{const b=document.createElement('button');b.className='sequence'+(s.id===project.activeId?' active':'');b.innerHTML=`<span class="seq-number">${String(i+1).padStart(2,'0')}</span><span class="seq-name"></span><span class="seq-actions"><button title="Rename" aria-label="Rename">✎</button></span>`;b.querySelector('.seq-name').textContent=s.name;b.addEventListener('click',e=>{if(e.target.closest('.seq-actions'))return;captureActive();project.activeId=s.id;loadSequence()});b.querySelector('.seq-actions button').addEventListener('click',e=>{e.stopPropagation();openModal('Rename sequence','Choose a name for this canvas.',s.name,name=>{s.name=name;renderSequences();updateHeader();save()})});list.appendChild(b)})}
+function updateHeader(){const s=active(),i=project.sequences.findIndex(x=>x.id===s.id)+1;$('projectTitle').textContent=project.title;$('activeSequenceTitle').textContent=String(i).padStart(2,'0')+' — '+s.name;$('canvasCorner').textContent='SEQ. '+String(i).padStart(2,'0')+' / STUDY';}
+function captureActive(){if(active())active().data=getSnapshot()}
+function addSequence(){captureActive();const n=project.sequences.length+1;const s={id:'s'+Date.now(),name:'Sequence '+String(n).padStart(2,'0'),data:null};project.sequences.push(s);project.activeId=s.id;loadSequence();save()}
+function setTool(t){tool=t;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));canvas.style.cursor=t==='eraser'?'cell':'crosshair'}
+function point(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}
+function styleStroke(){ctx.lineWidth=tool==='eraser'?Math.max(12,brushSize*4):brushSize;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=tool==='eraser'?'#fbfbf8':color;ctx.globalAlpha=tool==='eraser'?1:opacity;ctx.globalCompositeOperation='source-over'}
+function drawShape(a,b,asPreview=false){ctx.save();styleStroke();ctx.beginPath();if(tool==='line'||tool==='arrow'){ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();if(tool==='arrow'){const angle=Math.atan2(b.y-a.y,b.x-a.x),len=Math.max(12,brushSize*4);ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-len*Math.cos(angle-Math.PI/6),b.y-len*Math.sin(angle-Math.PI/6));ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-len*Math.cos(angle+Math.PI/6),b.y-len*Math.sin(angle+Math.PI/6));ctx.stroke()}}else if(tool==='rect'){ctx.strokeRect(a.x,a.y,b.x-a.x,b.y-a.y)}else if(tool==='ellipse'){ctx.ellipse((a.x+b.x)/2,(a.y+b.y)/2,Math.abs(b.x-a.x)/2,Math.abs(b.y-a.y)/2,0,0,Math.PI*2);ctx.stroke()}ctx.restore()}
+function redrawWithPreview(p){
+  if(!p.baseImageData) p.baseImageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+  ctx.putImageData(p.baseImageData,0,0);
+  drawShape(p.start,p.end,true);
+}
+canvas.addEventListener('pointerdown',e=>{if(!active())return;canvas.setPointerCapture(e.pointerId);pushUndo();drawing=true;start=point(e);last=start;if(['line','arrow','rect','ellipse'].includes(tool)){preview={base:getSnapshot(),baseImageData:ctx.getImageData(0,0,canvas.width,canvas.height),start,end:start};}else{ctx.save();styleStroke();ctx.beginPath();ctx.moveTo(start.x,start.y);ctx.lineTo(start.x+.1,start.y+.1);ctx.stroke();ctx.restore()}$('canvasStatus').textContent='Sketching…'});
+canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=point(e);if(preview){preview.end=p;redrawWithPreview(preview)}else{ctx.save();styleStroke();ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.restore()}last=p});
+function finish(e){
+  if(!drawing)return;
+  const p=point(e);
+  if(preview){
+    const finishedPreview=preview;
+    ctx.putImageData(finishedPreview.baseImageData,0,0);
+    drawShape(finishedPreview.start,p);
+    preview=null;
+  }
+  drawing=false;start=null;last=null;
+  captureActive();scheduleSave();$('canvasStatus').textContent='Sketch saved';
+}
+canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);
+document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
+$('colors').querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{color=b.dataset.color;$('colors').querySelectorAll('.swatch').forEach(x=>x.classList.toggle('active',x===b))}));
+$('sizeRange').addEventListener('input',e=>{brushSize=+e.target.value;$('sizeValue').textContent=brushSize+' px'});
+$('opacityRange').addEventListener('input',e=>{opacity=+e.target.value/100;$('opacityValue').textContent=e.target.value+'%'});
+$('undoBtn').addEventListener('click',()=>{if(!undoStack.length)return;redoStack.push(getSnapshot());restoreImage(undoStack.pop());setTimeout(()=>{captureActive();scheduleSave()},80);updateHistoryButtons()});
+$('redoBtn').addEventListener('click',()=>{if(!redoStack.length)return;undoStack.push(getSnapshot());restoreImage(redoStack.pop());setTimeout(()=>{captureActive();scheduleSave()},80);updateHistoryButtons()});
+function openModal(title,description,value,callback){modalAction=callback;$('modalTitle').textContent=title;$('modalDescription').textContent=description;$('modalInput').value=value||'';$('modalBackdrop').classList.add('open');setTimeout(()=>$('modalInput').focus(),20)}
+function closeModal(){$('modalBackdrop').classList.remove('open');modalAction=null}
+$('modalCancel').addEventListener('click',closeModal);$('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal()});
+$('modalSave').addEventListener('click',()=>{
+  const v=$('modalInput').value.trim();
+  if(modalAction){
+    const isConfirmAction = $('modalTitle').textContent==='Clear this canvas?' || $('modalTitle').textContent==='Delete canvas?';
+    if(isConfirmAction && !v) return;
+    if(v){const action=modalAction;closeModal();action(v);}
+  }
+});
+$('modalInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('modalSave').click();if(e.key==='Escape')closeModal()});
+$('addSequence').addEventListener('click',()=>openModal('New sequence','Create a blank canvas for another idea.','Sequence '+String(project.sequences.length+1).padStart(2,'0'),name=>{captureActive();const s={id:'s'+Date.now(),name,data:null};project.sequences.push(s);project.activeId=s.id;loadSequence();save()}));
+$('renameSequence').addEventListener('click',()=>openModal('Rename sequence','Give this canvas a short, recognizable name.',active().name,name=>{active().name=name;renderSequences();updateHeader();save()}));
+$('renameProject').addEventListener('click',()=>openModal('Rename project','Give this storyboard project a title.',project.title,name=>{project.title=name;updateHeader();save()}));
+$('duplicateSequence').addEventListener('click',()=>{captureActive();const s=active(),copy={id:'s'+Date.now(),name:s.name+' copy',data:s.data};project.sequences.splice(project.sequences.findIndex(x=>x.id===s.id)+1,0,copy);project.activeId=copy.id;loadSequence();save()});
+function moveSequence(dir){const i=project.sequences.findIndex(s=>s.id===project.activeId),j=i+dir;if(j<0||j>=project.sequences.length)return;[project.sequences[i],project.sequences[j]]=[project.sequences[j],project.sequences[i]];renderSequences();updateHeader();save()}
+$('moveLeft').addEventListener('click',()=>moveSequence(-1));$('moveRight').addEventListener('click',()=>moveSequence(1));
+$('deleteSequence').addEventListener('click',()=>{
+  const s=active();
+  if(!s) return;
+  if(project.sequences.length===1){
+    $('canvasStatus').textContent='Create another canvas before deleting the last one.';
+    return;
+  }
+  // Use the app's own modal instead of the browser confirm dialog.
+  openModal('Delete canvas?','This permanently removes this canvas and its drawing. Type DELETE to confirm.', '', value=>{
+    if(value!=='DELETE'){
+      $('canvasStatus').textContent='Deletion cancelled. Type DELETE exactly to confirm.';
+      return;
+    }
+    const i=project.sequences.findIndex(x=>x.id===s.id);
+    if(i<0) return;
+    project.sequences.splice(i,1);
+    project.activeId=project.sequences[Math.max(0,i-1)].id;
+    loadSequence();save();
+    $('canvasStatus').textContent='Canvas deleted';
+  });
+});
+$('clearCanvas').addEventListener('click',()=>{
+  if(!active()) return;
+  // Avoid native confirm dialogs, which may be suppressed in some local-file contexts.
+  openModal('Clear this canvas?','This removes the current drawing. You can use Undo to restore it. Type CLEAR to confirm.','',value=>{
+    if(value!=='CLEAR'){
+      $('canvasStatus').textContent='Clear cancelled. Type CLEAR exactly to confirm.';
+      return;
+    }
+    pushUndo();
+    drawWhite();
+    captureActive();
+    scheduleSave();
+    $('canvasStatus').textContent='Canvas cleared';
+  });
+});
+$('fitCanvas').addEventListener('click',()=>{canvas.style.height=window.innerWidth<620?'55vh':'min(63vh, 650px)';$('canvasStatus').textContent='Canvas fitted to view'});
+function download(url,name){const a=document.createElement('a');a.href=url;a.download=name;a.click()}
+$('exportPng').addEventListener('click',()=>{captureActive();const s=active();download(getSnapshot(),safeName(project.title+' - '+s.name)+'.png')});
+$('exportAll').addEventListener('click',()=>{captureActive();const payload={project:project.title,exportedAt:new Date().toISOString(),sequences:project.sequences.map((s,i)=>({number:i+1,name:s.name,canvas:s.data||null}))};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);download(url,safeName(project.title)+'-storyboard.json');setTimeout(()=>URL.revokeObjectURL(url),1000)});
+function safeName(s){return s.replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')||'storyboard'}
+window.addEventListener('beforeunload',captureActive);
+load();drawWhite();if(!active().data)active().data=getSnapshot();else restoreImage(active().data);renderSequences();updateHeader();save();
+})();
+</script>
+</body>
+</html>
