@@ -123,6 +123,19 @@
 (() => {
   const TOTAL = 90 * 60;
   let remaining = TOTAL, running = false, endAt = 0, interval = null, soundOn = true, audioCtx = null;
+  // Restore timer state after refresh/reopening the embedded page.
+  try {
+    const timerState = JSON.parse(localStorage.getItem('focusTimerState') || 'null');
+    if (timerState && typeof timerState === 'object') {
+      if (timerState.running && Number.isFinite(timerState.endAt)) {
+        endAt = timerState.endAt;
+        remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+        running = remaining > 0;
+      } else if (Number.isFinite(timerState.remaining)) {
+        remaining = Math.max(0, Math.min(TOTAL, Math.floor(timerState.remaining)));
+      }
+    }
+  } catch (_) {}
   let sessionName = 'Focus session';
   let completedSessions = [];
   try {
@@ -151,6 +164,9 @@
 
   function persistSessions() {
     try { localStorage.setItem('focusTimerSessions', JSON.stringify({ sessions: completedSessions, currentName: sessionName })); } catch (_) {}
+  }
+  function persistTimer() {
+    try { localStorage.setItem('focusTimerState', JSON.stringify({ remaining, running, endAt })); } catch (_) {}
   }
   function renderSessions() {
     sessionCountEl.textContent = String(completedSessions.length);
@@ -230,18 +246,19 @@
   function tick() {
     remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
     draw();
+    persistTimer();
     if (remaining <= 0) {
       running = false; stopInterval(); remaining = 0; draw();
       startBtn.textContent = '↻ Start again'; setStatus('Complete', 'complete');
       finished.classList.add('show');
       completedSessions.push({ name: sessionName, date: new Date().toLocaleString() });
-      persistSessions(); renderSessions(); beep();
+      persistSessions(); renderSessions(); persistTimer(); beep();
     }
   }
   function start() {
     if (running) {
       remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
-      running = false; stopInterval(); draw(); startBtn.textContent = '▶ Resume'; setStatus('Paused', 'paused'); return;
+      running = false; stopInterval(); draw(); persistTimer(); startBtn.textContent = '▶ Resume'; setStatus('Paused', 'paused'); return;
     }
     if (remaining <= 0) reset();
     finished.classList.remove('show');
@@ -251,10 +268,10 @@
     }
     running = true; endAt = Date.now() + remaining * 1000;
     startBtn.textContent = 'Ⅱ Pause'; setStatus('In session', 'running');
-    stopInterval(); interval = setInterval(tick, 250); tick();
+    persistTimer(); stopInterval(); interval = setInterval(tick, 250); tick();
   }
   function reset() {
-    running = false; stopInterval(); remaining = TOTAL; draw();
+    running = false; stopInterval(); remaining = TOTAL; endAt = 0; draw(); persistTimer();
     startBtn.textContent = '▶ Start'; setStatus('Ready', 'stopped');
     finished.classList.remove('show'); soundAlert.classList.remove('testing'); sessionNote.textContent = 'Prominent sound + visual alert at zero';
   }
@@ -294,6 +311,14 @@
   document.addEventListener('visibilitychange', () => { if (running && !document.hidden) tick(); });
   renderSessions();
   draw();
+  if (running) {
+    startBtn.textContent = 'Ⅱ Pause'; setStatus('In session', 'running');
+    interval = setInterval(tick, 250); tick();
+  } else if (remaining <= 0) {
+    remaining = 0; draw(); startBtn.textContent = '↻ Start again'; setStatus('Complete', 'complete'); finished.classList.add('show'); persistTimer();
+  } else if (remaining < TOTAL) {
+    startBtn.textContent = '▶ Resume'; setStatus('Paused', 'paused');
+  }
 })();
 </script>
 </body>
