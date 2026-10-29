@@ -49,17 +49,26 @@
   .footer strong { color:var(--ink); font-weight:700; }
   .finished { display:none; margin-top:16px; padding:12px; border:1px solid var(--ink); font-size:12px; line-height:1.5; }
   .finished.show { display:block; }
-  .session-tools { margin-top:22px; padding-top:18px; border-top:1px solid var(--ink); }
-  .session-tools h2 { margin:0 0 12px; font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
-  .field-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .session-tools { margin-top:18px; padding-top:14px; border-top:1px solid #ddd; }
+  .field-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
   input { min-width:0; flex:1; border:1.5px solid var(--ink); background:#fff; color:var(--ink); padding:12px; font:12px inherit; font-family:inherit; }
-  .session-count { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:14px 0; }
-  .session-count strong { font-size:26px; font-variant-numeric:tabular-nums; }
-  .session-list { list-style:none; margin:10px 0 0; padding:0; }
-  .session-list li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #ddd; font-size:11px; line-height:1.5; }
-  .session-list small { color:var(--muted); white-space:nowrap; }
-  .log-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-  .empty-log { color:var(--muted); font-size:11px; padding:12px 0; border-top:1px solid #ddd; }
+  .archive-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .current-name { min-width:0; color:var(--muted); font-size:11px; line-height:1.5; overflow-wrap:anywhere; }
+  .archive-button { display:inline-flex; align-items:center; gap:9px; white-space:nowrap; }
+  .folder-icon { font-size:17px; line-height:1; }
+  .modal-backdrop { display:none; position:fixed; inset:0; z-index:9999; background:rgba(17,17,17,.52); padding:18px; align-items:center; justify-content:center; }
+  .modal-backdrop.open { display:flex; }
+  .archive-modal { width:min(560px,100%); max-height:min(78vh,680px); overflow:hidden; background:var(--paper); color:var(--ink); border:2px solid var(--ink); box-shadow:12px 14px 0 rgba(0,0,0,.22); display:flex; flex-direction:column; }
+  .modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid var(--ink); }
+  .modal-head h2 { margin:0; font-size:13px; letter-spacing:.1em; text-transform:uppercase; }
+  .modal-head button { min-width:0; padding:8px 12px; }
+  .modal-summary { padding:12px 20px 0; font-size:11px; color:var(--muted); }
+  .session-list { list-style:none; margin:0; padding:12px 20px 20px; overflow:auto; }
+  .session-list li { display:flex; flex-direction:column; align-items:flex-start; gap:5px; padding:13px 0; border-bottom:1px solid #ddd; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+  .session-list li span { font-weight:700; }
+  .session-list small { color:var(--muted); white-space:normal; font-size:10px; }
+  .log-actions { display:flex; flex-wrap:wrap; gap:8px; padding:0 20px 18px; }
+  .empty-log { color:var(--muted); font-size:11px; padding:18px 0; }
   .sound-alert { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px; padding:14px; border:2px solid #7c3aed; background:#f3e8ff; color:#6d28d9; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; transition:background .25s, border-color .25s, color .25s, box-shadow .25s; }
   .sound-alert .pulse { width:10px; height:10px; border-radius:50%; background:currentColor; box-shadow:0 0 0 5px rgba(124,58,237,.14); flex:0 0 auto; }
   .sound-alert.state-running { border-color:#16a34a; background:#dcfce7; color:#166534; }
@@ -101,17 +110,13 @@
     <div class="finished" id="finished" role="status">SESSION COMPLETE — Take a breath. You’ve earned a break.</div>
     <div class="sound-alert state-idle" id="soundAlert" role="status" aria-live="assertive"><span class="pulse"></span><span id="soundAlertText">START A SESSION</span></div>
     <section class="session-tools" aria-label="Session tracker">
-      <h2>Session log</h2>
-      <div class="session-count"><span>Completed sessions</span><strong id="sessionCount">0</strong></div>
       <div class="field-row">
         <input id="sessionName" type="text" maxlength="80" placeholder="Name this session (e.g. Study)" aria-label="Session name">
         <button id="saveNameBtn" type="button">Save name</button>
       </div>
-      <div class="sub" id="currentSessionLabel">Current session: Focus session</div>
-      <ul class="session-list" id="sessionList" aria-live="polite"></ul>
-      <div class="log-actions">
-        <button id="exportBtn" type="button">Export logs (.csv)</button>
-        <button id="clearLogsBtn" type="button">Clear logs</button>
+      <div class="archive-row">
+        <div class="current-name" id="currentSessionLabel">Current session: Focus session</div>
+        <button class="archive-button" id="openArchiveBtn" type="button" aria-haspopup="dialog" aria-controls="archiveModal"><span class="folder-icon" aria-hidden="true">▰</span><span>Sessions</span><span id="sessionCount">0</span></button>
       </div>
     </section>
     <div class="footer">
@@ -119,6 +124,14 @@
       <span id="sessionNote">Sound alert when the timer reaches zero</span>
     </div>
   </main>
+  <div class="modal-backdrop" id="archiveModal" role="presentation" aria-hidden="true">
+    <section class="archive-modal" role="dialog" aria-modal="true" aria-labelledby="archiveTitle">
+      <div class="modal-head"><h2 id="archiveTitle">Session archive</h2><button id="closeArchiveBtn" type="button" aria-label="Close session archive">✕ Close</button></div>
+      <div class="modal-summary" id="archiveSummary">Your completed sessions, newest first.</div>
+      <ul class="session-list" id="sessionList" aria-live="polite"></ul>
+      <div class="log-actions"><button id="exportBtn" type="button">Export logs (.csv)</button><button id="clearLogsBtn" type="button">Clear logs</button></div>
+    </section>
+  </div>
 <script>
 (() => {
   const TOTAL = 90 * 60;
@@ -161,6 +174,10 @@
   const saveNameBtn = document.getElementById('saveNameBtn');
   const currentSessionLabel = document.getElementById('currentSessionLabel');
   const sessionList = document.getElementById('sessionList');
+  const archiveModal = document.getElementById('archiveModal');
+  const openArchiveBtn = document.getElementById('openArchiveBtn');
+  const closeArchiveBtn = document.getElementById('closeArchiveBtn');
+  const archiveSummary = document.getElementById('archiveSummary');
 
   function persistSessions() {
     try { localStorage.setItem('focusTimerSessions', JSON.stringify({ sessions: completedSessions, currentName: sessionName })); } catch (_) {}
@@ -171,6 +188,7 @@
   function renderSessions() {
     sessionCountEl.textContent = String(completedSessions.length);
     currentSessionLabel.textContent = `Current session: ${sessionName}`;
+    archiveSummary.textContent = `${completedSessions.length} completed session${completedSessions.length === 1 ? '' : 's'} · newest first`;
     sessionList.replaceChildren();
     if (!completedSessions.length) {
       const empty = document.createElement('li');
@@ -275,6 +293,12 @@
     startBtn.textContent = '▶ Start'; setStatus('Ready', 'stopped');
     finished.classList.remove('show'); soundAlert.classList.remove('testing'); sessionNote.textContent = 'Prominent sound + visual alert at zero';
   }
+  function openArchive() { archiveModal.classList.add('open'); archiveModal.setAttribute('aria-hidden', 'false'); closeArchiveBtn.focus(); }
+  function closeArchive() { archiveModal.classList.remove('open'); archiveModal.setAttribute('aria-hidden', 'true'); openArchiveBtn.focus(); }
+  openArchiveBtn.addEventListener('click', openArchive);
+  closeArchiveBtn.addEventListener('click', closeArchive);
+  archiveModal.addEventListener('click', event => { if (event.target === archiveModal) closeArchive(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && archiveModal.classList.contains('open')) closeArchive(); });
   saveNameBtn.addEventListener('click', () => {
     const entered = sessionNameInput.value.trim();
     if (!entered) { sessionNameInput.focus(); sessionNameInput.placeholder = 'Enter a session name first'; return; }
