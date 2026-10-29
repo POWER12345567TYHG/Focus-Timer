@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>90 Minute Focus Timer</title>
+<style>
+  :root { color-scheme: light; --ink:#111; --paper:#fbfaf7; --muted:#666; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:22px; background:transparent; color:var(--ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+  .frame {
+    position:relative; max-width:720px; margin:0 auto; padding:clamp(20px,5vw,42px);
+    background:var(--paper); border:2px solid var(--ink); border-radius:3px;
+    box-shadow:10px 12px 0 rgba(0,0,0,.16), 15px 18px 18px rgba(0,0,0,.12);
+    overflow:hidden;
+  }
+  .frame:before,.frame:after { content:""; position:absolute; height:1px; background:var(--ink); opacity:.8; }
+  .frame:before { width:72px; top:27px; right:32px; }
+  .frame:after { width:48px; bottom:28px; left:32px; }
+  .topline { display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:1px solid var(--ink); padding-bottom:14px; }
+  .eyebrow { font-size:11px; letter-spacing:.18em; text-transform:uppercase; }
+  .status { display:flex; align-items:center; gap:8px; font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+  .dot { width:9px; height:9px; border:1.5px solid #8a8f98; border-radius:50%; background:#8a8f98; transition:background .2s, border-color .2s, box-shadow .2s; }
+  .dot.active { background:#16a34a; border-color:#16a34a; box-shadow:0 0 0 4px rgba(22,163,74,.16); }
+  .dot.complete { background:#dc2626; border-color:#dc2626; box-shadow:0 0 0 4px rgba(220,38,38,.15); }
+  .status.running { color:#15803d; }
+  .status.stopped { color:#737983; }
+  .status.complete { color:#b91c1c; }
+  .status { transition:color .2s; }
+  .main { display:grid; grid-template-columns:1fr auto; gap:18px; align-items:center; padding:30px 0 24px; }
+  .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.16em; margin-bottom:10px; }
+  h1 { font-size:clamp(20px,4vw,28px); letter-spacing:-.06em; margin:0 0 8px; font-weight:700; }
+  .sub { font-size:12px; line-height:1.6; color:var(--muted); max-width:290px; }
+  .dial { width:clamp(132px,26vw,174px); aspect-ratio:1; border:2px solid var(--ink); border-radius:50%; display:grid; place-items:center; position:relative; }
+  .dial:before { content:""; position:absolute; inset:8px; border:1px solid #aaa; border-radius:50%; }
+  .time { position:relative; font-size:clamp(27px,6vw,38px); font-weight:700; letter-spacing:-.08em; font-variant-numeric:tabular-nums; }
+  .time small { display:block; text-align:center; font-size:9px; letter-spacing:.18em; font-weight:400; margin-top:5px; }
+  .track { height:8px; border:1px solid var(--ink); padding:1px; margin:2px 0 23px; }
+  .progress { width:0%; height:100%; background:var(--ink); transition:width .25s linear; }
+  .controls { display:flex; flex-wrap:wrap; gap:10px; }
+  button { appearance:none; border:1.5px solid var(--ink); background:transparent; color:var(--ink); padding:12px 18px; font:700 11px inherit; font-family:inherit; font-size:11px; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; min-width:105px; }
+  button.primary { background:var(--ink); color:white; }
+  button:hover { transform:translateY(-1px); box-shadow:3px 3px 0 rgba(0,0,0,.18); }
+  button:focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
+  .footer { display:flex; justify-content:space-between; gap:12px; border-top:1px solid var(--ink); margin-top:24px; padding-top:13px; font-size:10px; line-height:1.5; color:var(--muted); }
+  .footer strong { color:var(--ink); font-weight:700; }
+  .finished { display:none; margin-top:16px; padding:12px; border:1px solid var(--ink); font-size:12px; line-height:1.5; }
+  .finished.show { display:block; }
+  .session-tools { margin-top:22px; padding-top:18px; border-top:1px solid var(--ink); }
+  .session-tools h2 { margin:0 0 12px; font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
+  .field-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  input { min-width:0; flex:1; border:1.5px solid var(--ink); background:#fff; color:var(--ink); padding:12px; font:12px inherit; font-family:inherit; }
+  .session-count { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:14px 0; }
+  .session-count strong { font-size:26px; font-variant-numeric:tabular-nums; }
+  .session-list { list-style:none; margin:10px 0 0; padding:0; }
+  .session-list li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #ddd; font-size:11px; line-height:1.5; }
+  .session-list small { color:var(--muted); white-space:nowrap; }
+  .log-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .empty-log { color:var(--muted); font-size:11px; padding:12px 0; border-top:1px solid #ddd; }
+  .sound-alert { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px; padding:14px; border:2px solid #7c3aed; background:#f3e8ff; color:#6d28d9; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; transition:background .25s, border-color .25s, color .25s, box-shadow .25s; }
+  .sound-alert .pulse { width:10px; height:10px; border-radius:50%; background:currentColor; box-shadow:0 0 0 5px rgba(124,58,237,.14); flex:0 0 auto; }
+  .sound-alert.state-running { border-color:#16a34a; background:#dcfce7; color:#166534; }
+  .sound-alert.state-running .pulse { box-shadow:0 0 0 5px rgba(22,163,74,.15); }
+  .sound-alert.state-paused { border-color:#9ca3af; background:#e5e7eb; color:#4b5563; }
+  .sound-alert.state-paused .pulse { box-shadow:0 0 0 5px rgba(107,114,128,.15); }
+  .sound-alert.state-complete { border-color:#dc2626; background:#fee2e2; color:#991b1b; }
+  .sound-alert.state-complete .pulse { box-shadow:0 0 0 5px rgba(220,38,38,.16); }
+  .sound-alert.state-complete.testing { animation:alertPulse .7s ease-in-out infinite alternate; }
+  @keyframes alertPulse { from { background:#fee2e2; } to { background:#fecaca; } }
+  @media (max-width:480px) {
+    body { padding:10px; } .main { grid-template-columns:1fr; } .dial { width:130px; justify-self:center; grid-row:1; }
+    .maincopy { text-align:center; } .sub { margin:auto; } .controls button { flex:1; min-width:90px; }
+  }
+</style>
+</head>
+<body>
+  <main class="frame" aria-label="90 minute focus timer">
+    <div class="topline">
+      <span class="eyebrow">Focus protocol / 01</span>
+      <span class="status"><span class="dot" id="statusDot"></span><span id="statusText">Ready</span></span>
+    </div>
+    <section class="main">
+      <div class="maincopy">
+        <div class="label">Current focus</div>
+        <h1>One thing. Fully.</h1>
+        <div class="sub">A 90-minute deep-work session. Choose one task, remove distractions, and stay with it until the signal.</div>
+      </div>
+      <div class="dial" aria-label="Time remaining">
+        <div class="time" id="time">90:00<small>MINUTES : SECONDS</small></div>
+      </div>
+    </section>
+    <div class="track" aria-label="Session progress"><div class="progress" id="progress"></div></div>
+    <div class="controls">
+      <button class="primary" id="startBtn">▶ Start</button>
+      <button id="resetBtn">↺ Reset</button>
+      <button id="soundBtn" aria-pressed="true">♫ Sound on</button>
+    </div>
+    <div class="finished" id="finished" role="status">SESSION COMPLETE — Take a breath. You’ve earned a break.</div>
+    <div class="sound-alert state-idle" id="soundAlert" role="status" aria-live="assertive"><span class="pulse"></span><span id="soundAlertText">START A SESSION</span></div>
+    <section class="session-tools" aria-label="Session tracker">
+      <h2>Session log</h2>
+      <div class="session-count"><span>Completed sessions</span><strong id="sessionCount">0</strong></div>
+      <div class="field-row">
+        <input id="sessionName" type="text" maxlength="80" placeholder="Name this session (e.g. Study)" aria-label="Session name">
+        <button id="saveNameBtn" type="button">Save name</button>
+      </div>
+      <div class="sub" id="currentSessionLabel">Current session: Focus session</div>
+      <ul class="session-list" id="sessionList" aria-live="polite"></ul>
+      <div class="log-actions">
+        <button id="exportBtn" type="button">Export logs (.csv)</button>
+        <button id="clearLogsBtn" type="button">Clear logs</button>
+      </div>
+    </section>
+    <div class="footer">
+      <span><strong>90:00</strong> total session</span>
+      <span id="sessionNote">Sound alert when the timer reaches zero</span>
+    </div>
+  </main>
+<script>
+(() => {
+  const TOTAL = 90 * 60;
+  let remaining = TOTAL, running = false, endAt = 0, interval = null, soundOn = true, audioCtx = null;
+  let sessionName = 'Focus session';
+  let completedSessions = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem('focusTimerSessions') || 'null');
+    if (saved && Array.isArray(saved.sessions)) {
+      completedSessions = saved.sessions;
+      sessionName = typeof saved.currentName === 'string' && saved.currentName.trim() ? saved.currentName : 'Focus session';
+    }
+  } catch (_) {}
+  const timeEl = document.getElementById('time');
+  const progressEl = document.getElementById('progress');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const soundBtn = document.getElementById('soundBtn');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const finished = document.getElementById('finished');
+  const sessionNote = document.getElementById('sessionNote');
+  const soundAlert = document.getElementById('soundAlert');
+  const soundAlertText = document.getElementById('soundAlertText');
+  const sessionCountEl = document.getElementById('sessionCount');
+  const sessionNameInput = document.getElementById('sessionName');
+  const saveNameBtn = document.getElementById('saveNameBtn');
+  const currentSessionLabel = document.getElementById('currentSessionLabel');
+  const sessionList = document.getElementById('sessionList');
+
+  function persistSessions() {
+    try { localStorage.setItem('focusTimerSessions', JSON.stringify({ sessions: completedSessions, currentName: sessionName })); } catch (_) {}
+  }
+  function renderSessions() {
+    sessionCountEl.textContent = String(completedSessions.length);
+    currentSessionLabel.textContent = `Current session: ${sessionName}`;
+    sessionList.replaceChildren();
+    if (!completedSessions.length) {
+      const empty = document.createElement('li');
+      empty.className = 'empty-log';
+      empty.textContent = 'No completed sessions yet. Your finished sessions will appear here.';
+      sessionList.append(empty);
+      return;
+    }
+    [...completedSessions].reverse().forEach((item, index) => {
+      const li = document.createElement('li');
+      const name = document.createElement('span');
+      name.textContent = `${completedSessions.length - index}. ${item.name}`;
+      const date = document.createElement('small');
+      date.textContent = item.date;
+      li.append(name, date);
+      sessionList.append(li);
+    });
+  }
+  function draw() {
+    const mins = Math.floor(remaining / 60), secs = remaining % 60;
+    timeEl.innerHTML = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}<small>MINUTES : SECONDS</small>`;
+    progressEl.style.width = `${((TOTAL - remaining) / TOTAL) * 100}%`;
+  }
+  function setStatus(label, state) {
+    statusText.textContent = label;
+    statusDot.classList.remove('active', 'complete');
+    const statusEl = statusText.closest('.status');
+    statusEl.classList.remove('running', 'stopped', 'complete');
+    soundAlert.classList.remove('state-idle', 'state-running', 'state-paused', 'state-complete', 'testing');
+    if (state === 'running') {
+      statusDot.classList.add('active');
+      statusEl.classList.add('running');
+      soundAlert.classList.add('state-running');
+      soundAlertText.textContent = 'SESSION RUNNING';
+    } else if (state === 'complete') {
+      statusDot.classList.add('complete');
+      statusEl.classList.add('complete');
+      soundAlert.classList.add('state-complete');
+      soundAlertText.textContent = 'SESSION COMPLETE — TIME TO TAKE A BREAK';
+    } else if (state === 'paused') {
+      statusEl.classList.add('stopped');
+      soundAlert.classList.add('state-paused');
+      soundAlertText.textContent = 'SESSION PAUSED';
+    } else {
+      statusEl.classList.add('stopped');
+      soundAlert.classList.add('state-idle');
+      soundAlertText.textContent = 'START A SESSION';
+    }
+  }
+  function beep() {
+    soundAlert.classList.add('testing');
+    if (soundOn === false) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) { sessionNote.textContent = 'Timer complete — browser audio is unavailable.'; return; }
+      audioCtx = audioCtx || new Ctx();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      // Louder, longer repeating multi-tone alert; browser volume still applies.
+      [880, 660, 880, 1046, 880, 1046].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        const start = audioCtx.currentTime + i * 0.42;
+        osc.type = 'square'; osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.32, start + 0.025);
+        gain.gain.setValueAtTime(0.32, start + 0.24);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.36);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(start); osc.stop(start + 0.38);
+      });
+    } catch (_) { sessionNote.textContent = 'Timer complete — check your browser sound settings.'; }
+  }
+  function stopInterval() { if (interval) clearInterval(interval); interval = null; }
+  function tick() {
+    remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    draw();
+    if (remaining <= 0) {
+      running = false; stopInterval(); remaining = 0; draw();
+      startBtn.textContent = '↻ Start again'; setStatus('Complete', 'complete');
+      finished.classList.add('show');
+      completedSessions.push({ name: sessionName, date: new Date().toLocaleString() });
+      persistSessions(); renderSessions(); beep();
+    }
+  }
+  function start() {
+    if (running) {
+      remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      running = false; stopInterval(); draw(); startBtn.textContent = '▶ Resume'; setStatus('Paused', 'paused'); return;
+    }
+    if (remaining <= 0) reset();
+    finished.classList.remove('show');
+    if (soundOn) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) { audioCtx = audioCtx || new Ctx(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+    }
+    running = true; endAt = Date.now() + remaining * 1000;
+    startBtn.textContent = 'Ⅱ Pause'; setStatus('In session', 'running');
+    stopInterval(); interval = setInterval(tick, 250); tick();
+  }
+  function reset() {
+    running = false; stopInterval(); remaining = TOTAL; draw();
+    startBtn.textContent = '▶ Start'; setStatus('Ready', 'stopped');
+    finished.classList.remove('show'); soundAlert.classList.remove('testing'); sessionNote.textContent = 'Prominent sound + visual alert at zero';
+  }
+  saveNameBtn.addEventListener('click', () => {
+    const entered = sessionNameInput.value.trim();
+    if (!entered) { sessionNameInput.focus(); sessionNameInput.placeholder = 'Enter a session name first'; return; }
+    sessionName = entered;
+    sessionNameInput.value = '';
+    sessionNameInput.placeholder = 'Name this session (e.g. Study)';
+    persistSessions(); renderSessions();
+  });
+  sessionNameInput.addEventListener('keydown', event => { if (event.key === 'Enter') saveNameBtn.click(); });
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const escapeCsv = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const rows = [['Session name', 'Completed at'], ...completedSessions.map(item => [item.name, item.date])];
+    const csv = rows.map(row => row.map(escapeCsv).join(',')).join('\\r\\n');
+    const blob = new Blob(['\\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'focus-session-logs.csv';
+    document.body.append(link); link.click(); link.remove();
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById('clearLogsBtn').addEventListener('click', () => {
+    if (!completedSessions.length) return;
+    if (!window.confirm('Delete all saved session logs? This cannot be undone.')) return;
+    completedSessions = [];
+    persistSessions(); renderSessions();
+  });
+  startBtn.addEventListener('click', start);
+  resetBtn.addEventListener('click', reset);
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn; soundBtn.textContent = soundOn ? '♫ Sound on' : '♫ Sound off';
+    soundBtn.setAttribute('aria-pressed', String(soundOn));
+    sessionNote.textContent = soundOn ? 'Sound alert when the timer reaches zero' : 'Sound alert disabled';
+  });
+  document.addEventListener('visibilitychange', () => { if (running && !document.hidden) tick(); });
+  renderSessions();
+  draw();
+})();
+</script>
+</body>
+</html>
