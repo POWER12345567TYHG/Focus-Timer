@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>90 Minute Focus Timer</title>
+<style>
+:root{
+ color-scheme:light;
+ --ink:#111;--paper:#fbfaf7;--muted:#666;--line:#ddd;
+ --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+ --sh:3px 3px 0 rgba(0,0,0,.18);--sh2:5px 5px 0 rgba(0,0,0,.16);--ease:cubic-bezier(.2,.7,.2,1);
+ --lav:#CDBFF7;--grey:#D4D4D0;--lilac:#E3B5F0;--sun:#FFF4A8;--mint:#CBF3BB;--aqua:#B0FFFA;--pink:#FFC2D9;--coral:#FFB3B0;--peach:#FFD0A1;--go:#A7F3C0;--gold:#FFE98A;
+}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#9a978d transparent}
+html,body,button,input{font-family:var(--mono)}
+body{margin:0;padding:22px;background:transparent;color:var(--ink);font-size:12px}
+::placeholder{color:#9a978d!important}
+
+/* frame: sketchbook page with dot grid */
+.frame{position:relative;max-width:720px;margin:0 auto;padding:clamp(20px,5vw,42px);overflow:hidden;
+ border:2px solid var(--ink);border-radius:3px;
+ background:radial-gradient(rgba(17,17,17,.09) 1px,transparent 1.3px) 0 0/16px 16px,var(--paper);
+ box-shadow:6px 7px 0 rgba(0,0,0,.16),9px 11px 14px rgba(0,0,0,.10)}
+.frame:before,.frame:after{content:"";position:absolute;height:1px;background:var(--ink);opacity:.8;pointer-events:none}
+.frame:before{width:72px;top:12px;right:24px}.frame:after{width:48px;bottom:10px;left:24px}
+
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--ink);padding-bottom:14px}
+.eyebrow{font:10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.eyebrow b{color:var(--ink);font-weight:700}
+
+/* status chip */
+.status{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--ink);background:var(--grey);padding:5px 10px;font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;transition:background .2s}
+.status.running{background:var(--go)}
+.status.stopped{background:var(--grey)}
+.status.paused{background:var(--sun)}
+.status.complete{background:var(--coral)}
+.dot{width:9px;height:9px;border:1.5px solid var(--ink);background:#fff;transition:background .2s}
+.dot.active{background:var(--ink);animation:blink 1.2s steps(2,start) infinite}
+.dot.complete{background:var(--ink)}
+@keyframes blink{50%{opacity:.25}}
+
+.main{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;padding:30px 0 24px}
+.label{font:10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+h1{font:700 clamp(22px,4.4vw,30px) var(--mono);letter-spacing:-.06em;margin:0 0 10px;border-bottom:1.5px solid var(--ink);padding-bottom:6px;display:inline-block}
+.sub{font:11.5px/1.65 var(--mono);color:var(--muted);max-width:300px}
+
+/* dial: square-cut clock tile with hard shadow, colour follows state */
+.dial{width:clamp(140px,27vw,180px);aspect-ratio:1;border:1.5px solid var(--ink);background:var(--lav);box-shadow:var(--sh2);display:grid;place-items:center;position:relative;transition:background .25s}
+.dial:before{content:"";position:absolute;inset:7px;border:1.5px dashed var(--ink);opacity:.55;pointer-events:none}
+.dial.state-running{background:var(--go)}
+.dial.state-paused{background:var(--sun)}
+.dial.state-complete{background:var(--coral)}
+.time{position:relative;font:700 clamp(28px,6vw,38px) var(--mono);letter-spacing:-.08em;font-variant-numeric:tabular-nums;text-align:center}
+.time small{display:block;text-align:center;font:9px var(--mono);letter-spacing:.18em;font-weight:400;margin-top:6px}
+
+/* segmented progress */
+.track{height:14px;border:1.5px solid var(--ink);background:#fff;padding:2px;margin:2px 0 23px;position:relative}
+.progress{width:0%;height:100%;background:var(--ink);transition:width .25s linear}
+.track.state-running .progress{background:repeating-linear-gradient(90deg,var(--ink) 0 6px,#3a3a3a 6px 8px)}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px}
+button{appearance:none;border:1.5px solid var(--ink);border-radius:0;background:transparent;color:var(--ink);padding:11px 16px;font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;min-width:105px;transition:transform .12s var(--ease),box-shadow .12s var(--ease),background .12s}
+button:hover{background:#fff;transform:translateY(-1px);box-shadow:var(--sh)}
+button:active{transform:translate(1px,1px);box-shadow:none}
+button:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+button.primary,button.primary:hover{background:var(--go)}
+button.primary:hover{background:#8ee9ac}
+#soundBtn[aria-pressed=true]{background:var(--aqua);box-shadow:inset 0 -3px 0 var(--ink)}
+#soundBtn[aria-pressed=true]:hover{background:#8ff5ee}
+#soundBtn[aria-pressed=false]{background:var(--grey);color:#555}
+button.danger{background:#FFE3E3;color:#B91C1C;border-color:#F87171}
+button.danger:hover{background:var(--coral);color:#7F1D1D}
+button.danger.armed{background:var(--coral);color:var(--ink);border-color:var(--ink)}
+
+.finished{display:none;margin-top:16px;padding:12px 14px;border:1.5px solid var(--ink);background:var(--gold);box-shadow:var(--sh);font:700 11.5px/1.5 var(--mono)}
+.finished.show{display:block}
+
+/* alert strip */
+.sound-alert{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding:12px 14px;border:1.5px solid var(--ink);background:var(--lav);color:var(--ink);font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;transition:background .25s}
+.sound-alert .pulse{width:10px;height:10px;border:1.5px solid var(--ink);background:#fff;flex:0 0 auto}
+.sound-alert.state-idle{background:var(--lav)}
+.sound-alert.state-running{background:var(--go)}
+.sound-alert.state-running .pulse{background:var(--ink);animation:blink 1.2s steps(2,start) infinite}
+.sound-alert.state-paused{background:var(--sun)}
+.sound-alert.state-complete{background:var(--coral)}
+.sound-alert.state-complete .pulse{background:var(--ink)}
+.sound-alert.state-complete.testing{animation:alertPulse .7s ease-in-out infinite alternate}
+@keyframes alertPulse{from{background:var(--coral)}to{background:var(--pink)}}
+
+/* session tools */
+.session-tools{margin-top:18px;padding-top:14px;border-top:1px solid var(--ink)}
+.field-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+input{min-width:0;flex:1;border:1.5px solid var(--ink);border-radius:0;background:#fff;color:var(--ink);padding:10px 11px;font:12px var(--mono)}
+input:focus{box-shadow:var(--sh);outline:none}
+.archive-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.current-name{min-width:0;color:var(--muted);font:11px/1.5 var(--mono);overflow-wrap:anywhere}
+.current-name b{color:var(--ink)}
+.archive-button{display:inline-flex;align-items:center;gap:9px;white-space:nowrap}
+.folder-icon{font-size:15px;line-height:1}
+#sessionCount{background:var(--ink);color:#fff;padding:1px 7px;font-size:10px;min-width:22px;text-align:center}
+
+.footer{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--ink);margin-top:24px;padding-top:13px;font:10px/1.5 var(--mono);letter-spacing:.06em;color:var(--muted)}
+.footer strong{color:var(--ink);font-weight:700}
+
+/* archive dialog */
+.modal-backdrop{display:none;position:fixed;inset:0;z-index:9999;background:rgba(17,17,17,.52);padding:18px;align-items:center;justify-content:center}
+.modal-backdrop.open{display:flex}
+.archive-modal{width:min(560px,100%);max-height:min(78vh,680px);overflow:hidden;background:var(--paper);color:var(--ink);border:2px solid var(--ink);box-shadow:8px 9px 0 rgba(0,0,0,.22);display:flex;flex-direction:column}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--ink);background:var(--lav)}
+.modal-head h2{margin:0;font:700 12px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.modal-head button{min-width:0;padding:7px 11px;background:#fff}
+.modal-summary{padding:12px 20px 0;font:10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.session-list{list-style:none;margin:0;padding:12px 20px 16px;overflow:auto;display:grid;gap:8px}
+.session-list li{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:10px 12px;border:1.5px solid var(--ink);background:#ECEAE4;font:12px/1.5 var(--mono);overflow-wrap:anywhere;transition:transform .12s var(--ease),box-shadow .12s var(--ease),background .12s}
+.session-list li:hover{background:#fff;transform:translate(-1px,-1px);box-shadow:var(--sh)}
+.session-list li span{font-weight:700;letter-spacing:-.03em}
+.session-list small{color:var(--muted);white-space:normal;font-size:10px}
+.session-list li.empty-log{border:1.5px dashed var(--ink);background:transparent;color:var(--muted);font-size:11px;padding:18px 12px;text-align:center;align-items:center}
+.session-list li.empty-log:hover{transform:none;box-shadow:none;background:transparent}
+.log-actions{display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px 18px;border-top:1px solid var(--ink)}
+
+@media(max-width:480px){
+ body{padding:10px}.main{grid-template-columns:1fr}.dial{width:140px;justify-self:center;grid-row:1}
+ .maincopy{text-align:center}.sub{margin:auto}.controls button{flex:1;min-width:90px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+  <main class="frame" aria-label="90 minute focus timer">
+    <div class="topline">
+      <span class="eyebrow">Creator’s desk / <b>Focus protocol 01</b></span>
+      <span class="status stopped"><span class="dot" id="statusDot"></span><span id="statusText">Ready</span></span>
+    </div>
+    <section class="main">
+      <div class="maincopy">
+        <div class="label">Current focus</div>
+        <h1>One thing. Fully.</h1>
+        <div class="sub">A 90-minute deep-work session. Choose one task, remove distractions, and stay with it until the signal.</div>
+      </div>
+      <div class="dial state-idle" id="dial" aria-label="Time remaining">
+        <div class="time" id="time">90:00<small>MINUTES : SECONDS</small></div>
+      </div>
+    </section>
+    <div class="track" id="track" aria-label="Session progress"><div class="progress" id="progress"></div></div>
+    <div class="controls">
+      <button class="primary" id="startBtn">▶ Start</button>
+      <button id="resetBtn">↺ Reset</button>
+      <button id="soundBtn" aria-pressed="true">♫ Sound on</button>
+    </div>
+    <div class="finished" id="finished" role="status">SESSION COMPLETE — Take a breath. You’ve earned a break.</div>
+    <div class="sound-alert state-idle" id="soundAlert" role="status" aria-live="assertive"><span class="pulse"></span><span id="soundAlertText">START A SESSION</span></div>
+    <section class="session-tools" aria-label="Session tracker">
+      <div class="field-row">
+        <input id="sessionName" type="text" maxlength="80" placeholder="Name this session (e.g. Study)" aria-label="Session name">
+        <button id="saveNameBtn" type="button">Save name</button>
+      </div>
+      <div class="archive-row">
+        <div class="current-name" id="currentSessionLabel">Current session: Focus session</div>
+        <button class="archive-button" id="openArchiveBtn" type="button" aria-haspopup="dialog" aria-controls="archiveModal"><span class="folder-icon" aria-hidden="true">▰</span><span>Sessions</span><span id="sessionCount">0</span></button>
+      </div>
+    </section>
+    <div class="footer">
+      <span><strong>90:00</strong> total session</span>
+      <span id="sessionNote">Sound alert when the timer reaches zero</span>
+    </div>
+  </main>
+  <div class="modal-backdrop" id="archiveModal" role="presentation" aria-hidden="true">
+    <section class="archive-modal" role="dialog" aria-modal="true" aria-labelledby="archiveTitle">
+      <div class="modal-head"><h2 id="archiveTitle">Session archive</h2><button id="closeArchiveBtn" type="button" aria-label="Close session archive">✕ Close</button></div>
+      <div class="modal-summary" id="archiveSummary">Your completed sessions, newest first.</div>
+      <ul class="session-list" id="sessionList" aria-live="polite"></ul>
+      <div class="log-actions"><button id="exportBtn" type="button">Export logs (.csv)</button><button class="danger" id="clearLogsBtn" type="button">Clear logs</button></div>
+    </section>
+  </div>
+<script>
+(() => {
+  const TOTAL = 90 * 60;
+  let remaining = TOTAL, running = false, endAt = 0, interval = null, soundOn = true, audioCtx = null;
+  // Restore timer state after refresh/reopening the embedded page.
+  try {
+    const timerState = JSON.parse(localStorage.getItem('focusTimerState') || 'null');
+    if (timerState && typeof timerState === 'object') {
+      if (timerState.running && Number.isFinite(timerState.endAt)) {
+        endAt = timerState.endAt;
+        remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+        running = remaining > 0;
+      } else if (Number.isFinite(timerState.remaining)) {
+        remaining = Math.max(0, Math.min(TOTAL, Math.floor(timerState.remaining)));
+      }
+    }
+  } catch (_) {}
+  let sessionName = 'Focus session';
+  let completedSessions = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem('focusTimerSessions') || 'null');
+    if (saved && Array.isArray(saved.sessions)) {
+      completedSessions = saved.sessions;
+      sessionName = typeof saved.currentName === 'string' && saved.currentName.trim() ? saved.currentName : 'Focus session';
+    }
+  } catch (_) {}
+  const timeEl = document.getElementById('time');
+  const progressEl = document.getElementById('progress');
+  const trackEl = document.getElementById('track');
+  const dialEl = document.getElementById('dial');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const soundBtn = document.getElementById('soundBtn');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const finished = document.getElementById('finished');
+  const sessionNote = document.getElementById('sessionNote');
+  const soundAlert = document.getElementById('soundAlert');
+  const soundAlertText = document.getElementById('soundAlertText');
+  const sessionCountEl = document.getElementById('sessionCount');
+  const sessionNameInput = document.getElementById('sessionName');
+  const saveNameBtn = document.getElementById('saveNameBtn');
+  const currentSessionLabel = document.getElementById('currentSessionLabel');
+  const sessionList = document.getElementById('sessionList');
+  const archiveModal = document.getElementById('archiveModal');
+  const openArchiveBtn = document.getElementById('openArchiveBtn');
+  const closeArchiveBtn = document.getElementById('closeArchiveBtn');
+  const archiveSummary = document.getElementById('archiveSummary');
+  const clearLogsBtn = document.getElementById('clearLogsBtn');
+
+  function persistSessions() {
+    try { localStorage.setItem('focusTimerSessions', JSON.stringify({ sessions: completedSessions, currentName: sessionName })); } catch (_) {}
+  }
+  function persistTimer() {
+    try { localStorage.setItem('focusTimerState', JSON.stringify({ remaining, running, endAt })); } catch (_) {}
+  }
+  function renderSessions() {
+    sessionCountEl.textContent = String(completedSessions.length);
+    currentSessionLabel.replaceChildren('Current session: ');
+    const nm = document.createElement('b'); nm.textContent = sessionName; currentSessionLabel.append(nm);
+    archiveSummary.textContent = `${completedSessions.length} completed session${completedSessions.length === 1 ? '' : 's'} · newest first`;
+    sessionList.replaceChildren();
+    if (!completedSessions.length) {
+      const empty = document.createElement('li');
+      empty.className = 'empty-log';
+      empty.textContent = 'No completed sessions yet. Your finished sessions will appear here.';
+      sessionList.append(empty);
+      return;
+    }
+    [...completedSessions].reverse().forEach((item, index) => {
+      const li = document.createElement('li');
+      const name = document.createElement('span');
+      name.textContent = `${completedSessions.length - index}. ${item.name}`;
+      const date = document.createElement('small');
+      date.textContent = item.date;
+      li.append(name, date);
+      sessionList.append(li);
+    });
+  }
+  function draw() {
+    const mins = Math.floor(remaining / 60), secs = remaining % 60;
+    timeEl.innerHTML = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}<small>MINUTES : SECONDS</small>`;
+    progressEl.style.width = `${((TOTAL - remaining) / TOTAL) * 100}%`;
+  }
+  function setStatus(label, state) {
+    statusText.textContent = label;
+    statusDot.classList.remove('active', 'complete');
+    const statusEl = statusText.closest('.status');
+    statusEl.classList.remove('running', 'stopped', 'paused', 'complete');
+    soundAlert.classList.remove('state-idle', 'state-running', 'state-paused', 'state-complete', 'testing');
+    ['state-idle','state-running','state-paused','state-complete'].forEach(c => { dialEl.classList.remove(c); trackEl.classList.remove(c); });
+    const cls = state === 'running' ? 'state-running' : state === 'complete' ? 'state-complete' : state === 'paused' ? 'state-paused' : 'state-idle';
+    dialEl.classList.add(cls); trackEl.classList.add(cls);
+    if (state === 'running') {
+      statusDot.classList.add('active');
+      statusEl.classList.add('running');
+      soundAlert.classList.add('state-running');
+      soundAlertText.textContent = 'SESSION RUNNING';
+    } else if (state === 'complete') {
+      statusDot.classList.add('complete');
+      statusEl.classList.add('complete');
+      soundAlert.classList.add('state-complete');
+      soundAlertText.textContent = 'SESSION COMPLETE — TIME TO TAKE A BREAK';
+    } else if (state === 'paused') {
+      statusEl.classList.add('paused');
+      soundAlert.classList.add('state-paused');
+      soundAlertText.textContent = 'SESSION PAUSED';
+    } else {
+      statusEl.classList.add('stopped');
+      soundAlert.classList.add('state-idle');
+      soundAlertText.textContent = 'START A SESSION';
+    }
+  }
+  function beep() {
+    soundAlert.classList.add('testing');
+    if (soundOn === false) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) { sessionNote.textContent = 'Timer complete — browser audio is unavailable.'; return; }
+      audioCtx = audioCtx || new Ctx();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      // Louder, longer repeating multi-tone alert; browser volume still applies.
+      [880, 660, 880, 1046, 880, 1046].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        const start = audioCtx.currentTime + i * 0.42;
+        osc.type = 'square'; osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.32, start + 0.025);
+        gain.gain.setValueAtTime(0.32, start + 0.24);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.36);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(start); osc.stop(start + 0.38);
+      });
+    } catch (_) { sessionNote.textContent = 'Timer complete — check your browser sound settings.'; }
+  }
+  function stopInterval() { if (interval) clearInterval(interval); interval = null; }
+  function tick() {
+    remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    draw();
+    persistTimer();
+    if (remaining <= 0) {
+      running = false; stopInterval(); remaining = 0; draw();
+      startBtn.textContent = '↻ Start again'; setStatus('Complete', 'complete');
+      finished.classList.add('show');
+      completedSessions.push({ name: sessionName, date: new Date().toLocaleString() });
+      persistSessions(); renderSessions(); persistTimer(); beep();
+    }
+  }
+  function start() {
+    if (running) {
+      remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      running = false; stopInterval(); draw(); persistTimer(); startBtn.textContent = '▶ Resume'; setStatus('Paused', 'paused'); return;
+    }
+    if (remaining <= 0) reset();
+    finished.classList.remove('show');
+    if (soundOn) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) { audioCtx = audioCtx || new Ctx(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+    }
+    running = true; endAt = Date.now() + remaining * 1000;
+    startBtn.textContent = 'Ⅱ Pause'; setStatus('In session', 'running');
+    persistTimer(); stopInterval(); interval = setInterval(tick, 250); tick();
+  }
+  function reset() {
+    running = false; stopInterval(); remaining = TOTAL; endAt = 0; draw(); persistTimer();
+    startBtn.textContent = '▶ Start'; setStatus('Ready', 'stopped');
+    finished.classList.remove('show'); soundAlert.classList.remove('testing'); sessionNote.textContent = 'Prominent sound + visual alert at zero';
+  }
+  function openArchive() { archiveModal.classList.add('open'); archiveModal.setAttribute('aria-hidden', 'false'); closeArchiveBtn.focus(); }
+  function closeArchive() { archiveModal.classList.remove('open'); archiveModal.setAttribute('aria-hidden', 'true'); openArchiveBtn.focus(); resetClearArm(); }
+  openArchiveBtn.addEventListener('click', openArchive);
+  closeArchiveBtn.addEventListener('click', closeArchive);
+  archiveModal.addEventListener('click', event => { if (event.target === archiveModal) closeArchive(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && archiveModal.classList.contains('open')) closeArchive(); });
+  saveNameBtn.addEventListener('click', () => {
+    const entered = sessionNameInput.value.trim();
+    if (!entered) { sessionNameInput.focus(); sessionNameInput.placeholder = 'Enter a session name first'; return; }
+    sessionName = entered;
+    sessionNameInput.value = '';
+    sessionNameInput.placeholder = 'Name this session (e.g. Study)';
+    persistSessions(); renderSessions();
+  });
+  sessionNameInput.addEventListener('keydown', event => { if (event.key === 'Enter') saveNameBtn.click(); });
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const escapeCsv = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const rows = [['Session name', 'Completed at'], ...completedSessions.map(item => [item.name, item.date])];
+    const csv = rows.map(row => row.map(escapeCsv).join(',')).join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'focus-session-logs.csv';
+    document.body.append(link); link.click(); link.remove();
+    URL.revokeObjectURL(url);
+  });
+  // Two-click confirm instead of window.confirm (dialogs are often blocked in embeds).
+  let clearArm = null;
+  function resetClearArm() { clearTimeout(clearArm); clearArm = null; clearLogsBtn.textContent = 'Clear logs'; clearLogsBtn.classList.remove('armed'); }
+  clearLogsBtn.addEventListener('click', () => {
+    if (!completedSessions.length) return;
+    if (!clearArm) {
+      clearLogsBtn.textContent = 'Click again to delete'; clearLogsBtn.classList.add('armed');
+      clearArm = setTimeout(resetClearArm, 3000); return;
+    }
+    resetClearArm();
+    completedSessions = [];
+    persistSessions(); renderSessions();
+  });
+  startBtn.addEventListener('click', start);
+  resetBtn.addEventListener('click', reset);
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn; soundBtn.textContent = soundOn ? '♫ Sound on' : '♫ Sound off';
+    soundBtn.setAttribute('aria-pressed', String(soundOn));
+    sessionNote.textContent = soundOn ? 'Sound alert when the timer reaches zero' : 'Sound alert disabled';
+  });
+  document.addEventListener('visibilitychange', () => { if (running && !document.hidden) tick(); });
+  renderSessions();
+  draw();
+  if (running) {
+    startBtn.textContent = 'Ⅱ Pause'; setStatus('In session', 'running');
+    interval = setInterval(tick, 250); tick();
+  } else if (remaining <= 0) {
+    remaining = 0; draw(); startBtn.textContent = '↻ Start again'; setStatus('Complete', 'complete'); finished.classList.add('show'); persistTimer();
+  } else if (remaining < TOTAL) {
+    startBtn.textContent = '▶ Resume'; setStatus('Paused', 'paused');
+  } else {
+    setStatus('Ready', 'stopped');
+  }
+})();
+</script>
+</body>
+</html>
