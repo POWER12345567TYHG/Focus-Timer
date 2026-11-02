@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Monthly Review</title>
+<style>
+:root{
+  --ink:#111; --bg:#FBFAF6; --mint:#B9E7A5; --yel:#FFD976; --cor:#FF8A78; --lav:#CBBDF8; --sky:#A9D8F5; --mute:#6b6b66;
+  --mono:ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);
+  background-image:radial-gradient(#11111122 1.2px,transparent 1.3px);
+  background-size:24px 24px;
+  color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.4;
+  min-height:100vh;padding:14px 14px 20px;
+}
+.wrap{width:1260px;margin:0 auto;border:3px solid var(--ink);background:var(--bg);background-image:radial-gradient(#11111122 1.2px,transparent 1.3px);background-size:24px 24px;padding:16px 18px 14px;box-shadow:6px 6px 0 #1112}
+.card{background:#fff;border:3px solid var(--ink);box-shadow:5px 5px 0 #1112;position:relative}
+.tag{display:inline-block;font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border:2px solid var(--ink);padding:2px 8px;background:var(--mint);color:var(--ink);white-space:nowrap}
+.tag.mini{font-size:10px;padding:1px 6px;letter-spacing:.1em;border-width:2px}
+.k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--mute);text-transform:uppercase}
+/* header */
+.head{padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.head .l{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.head h1{margin:0;font-family:var(--mono);font-size:19px;letter-spacing:.08em;text-transform:uppercase}
+.head .sub{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em}
+.count{font-family:var(--mono);font-size:12px;color:var(--mute);letter-spacing:.08em;white-space:nowrap}
+/* controls */
+label.f{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--mute);text-transform:uppercase}
+.f input,.f textarea,.f select{display:block;width:100%;margin-top:3px;border:2px solid var(--ink);background:#fff;padding:5px 8px;font:500 13px var(--sans);border-radius:0;outline:0;color:var(--ink);text-transform:none;letter-spacing:0}
+.f textarea{resize:none;min-height:46px;overflow:hidden}
+.f input:focus,.f textarea:focus,.f select:focus{background:#FFFBE8}
+.btn{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:2px solid var(--ink);background:#fff;padding:6px 10px;cursor:pointer;box-shadow:2px 2px 0 #1113;color:var(--ink);white-space:nowrap}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 #1113}
+.btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #1113}
+.btn.pri{background:var(--mint)} .btn.warn{background:var(--cor)} .btn.sm{padding:4px 8px;font-size:10px}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.chip{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:2px solid var(--ink);background:#fff;padding:3px 8px;cursor:pointer;color:var(--ink);user-select:none}
+.chip.on{background:var(--ink);color:#fff}
+.bar input,.bar select{border:2px solid var(--ink);background:#fff;padding:5px 8px;font:500 12px var(--sans);border-radius:0;outline:0;min-width:0}
+.bar input{flex:1;min-width:120px}
+/* gallery */
+.gallery{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+.rcard{cursor:pointer;overflow:hidden;transition:transform .12s}
+.rcard:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #1112}
+.rcard.pop{animation:pop .28s ease-in forwards}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(.2) rotate(-4deg);opacity:0}}
+.rcard .rc{position:relative;height:124px;display:flex;align-items:center;justify-content:center;border-bottom:3px solid var(--ink)}
+.rcard .rc svg{width:90px;height:90px}
+.rcard .rc,.prevbox{background-image:radial-gradient(rgba(17,17,17,.14) 1px,transparent 1.5px);background-size:10px 10px}
+.fotag{position:absolute;top:7px;left:7px;font-size:10px;letter-spacing:.08em;padding:1px 6px;box-shadow:2px 2px 0 #1113}
+.rcard .rb{padding:9px 10px 11px}
+.rcard .top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.rcard h3{margin:0;font-family:var(--mono);font-size:14.5px;letter-spacing:.04em;white-space:nowrap}
+.stars{font-size:13px;letter-spacing:1px;color:#E0A100;white-space:nowrap}
+.stars .off{color:#d6d3c8}
+.rcard .chips{gap:4px;margin-top:8px}
+.empty{padding:26px 14px;text-align:center;grid-column:1/-1}
+.empty .big{font-family:var(--mono);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px}
+.empty p{color:var(--mute);margin:6px 0 0;font-size:13px}
+/* modal */
+.overlay{display:none;position:fixed;inset:0;background:#11111159;z-index:50;overflow:auto;padding:16px 10px}
+.overlay.show{display:block}
+.modal{max-width:760px;margin:0 auto}
+.mhead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:2px dashed #888}
+.mbody{padding:10px 14px 12px}
+.g4{display:grid;grid-template-columns:1.2fr .8fr 1.2fr 1.4fr;gap:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media(max-width:620px){.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+.ratingrow{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.prevbox{width:46px;height:46px;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;flex:none}
+.prevbox svg{width:34px;height:34px}
+.starpick{display:flex;gap:0}
+.starpick button{border:0;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:#d6d3c8;padding:0 2px}
+.starpick button.on{color:#E0A100}
+.chk{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-left:auto;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:#111}
+.prev{margin:8px 0 0;padding:6px 10px;border-left:4px solid var(--lav);background:#F6F3FF;font-size:12.5px;display:none}
+.prev.show{display:block}
+.prev .k{margin-right:6px}
+.actions{display:flex;gap:8px;align-items:center;margin-top:10px}
+.actions .spacer{flex:1}
+.footrow{margin-top:18px;display:flex;gap:14px 36px;justify-content:center;align-items:center;flex-wrap:wrap}
+.pager{margin-top:0;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.ysel{display:flex;align-items:center;gap:10px}
+.ysel select{border:2px solid var(--ink);background:#fff;padding:6px 10px;font:700 13px var(--mono);border-radius:0;outline:0;color:var(--ink)}
+#yearInfo{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--mute)}
+#ysum{margin-bottom:14px}
+.ysum{padding:6px 12px;display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap}
+.ysT{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.16em;color:var(--mute)}
+.ysN{margin:0;font-size:12.5px}
+.ysrow{display:flex;flex:1;flex-wrap:wrap;gap:6px 22px;align-items:center}
+.ysb b{display:inline;font-family:var(--mono);font-size:20px;line-height:1;margin-right:6px}
+.ysb span{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--mute)}
+.ysf{display:flex;gap:6px;flex-wrap:wrap;align-self:center}
+.ystr{margin-left:auto}
+.trend{display:flex;align-items:flex-end;gap:4px;height:32px}
+.tb{width:12px;border:2px solid var(--ink);box-sizing:border-box}
+.tb.z{border-style:dashed;border-color:#b9b6aa;background:transparent}
+.trl{display:flex;gap:4px;margin-top:1px;line-height:1}
+.trl span{width:12px;text-align:center;font-family:var(--mono);font-size:9px;color:var(--mute)}
+.rcard.now{outline:3px solid var(--cor);outline-offset:3px}
+.nowtag{position:absolute;top:7px;right:7px;font-size:10px;letter-spacing:.08em;padding:1px 6px;background:var(--cor);box-shadow:2px 2px 0 #1113}
+.rcard.dim{opacity:.35}
+.rcard.ghost{border-style:dashed;box-shadow:none;background:transparent}
+.rcard.ghost .rc{background:transparent;color:#b9b6aa;font:700 28px var(--mono)}
+.rcard.ghost h3{color:var(--mute)}
+.rcard.ghost:hover{background:#fff}
+.tools{margin-top:0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.hint{text-align:center;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.12em;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="card head">
+    <div class="l">
+      <span class="tag" style="background:var(--lav)">Monthly</span>
+      <h1>Review</h1>
+      <span class="sub">WINS &rarr; LESSONS &rarr; NEXT</span>
+    </div>
+    <div class="count" id="count">REVIEWED 00 / 00</div>
+  </header>
+
+  <div class="bar">
+    <div class="chips" id="filter"></div>
+    <div class="chips" id="ffilter"></div>
+    <input id="q" placeholder="Search all years&hellip;" autocomplete="off">
+    <select id="themeSel" title="Cover style"></select>
+    <button class="btn pri" id="newReview">+ New</button>
+  </div>
+  <div id="ysum"></div>
+  <div class="gallery" id="gallery"></div>
+  <div class="footrow">
+  <div class="pager" id="pager">
+    <button class="btn" id="prevYear">&larr; Prev year</button>
+    <label class="ysel"><select id="yearSel" title="Jump to year"></select><span id="yearInfo"></span></label>
+    <button class="btn" id="nextYear">Next year &rarr;</button>
+  </div>
+
+  <div class="tools">
+    <button class="btn sm" id="exportBtn">Export backup</button>
+    <button class="btn sm" id="importBtn">Import backup</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+  </div>
+  </div>
+  <div class="hint">CTRL + SPACE &middot; NEW REVIEW &nbsp;|&nbsp; SAVED IN THIS BROWSER</div>
+</div>
+
+<div class="overlay" id="modal">
+  <div class="card modal">
+    <div class="mhead">
+      <span class="tag" style="background:var(--lav)" id="mTag">New review</span>
+      <button class="btn sm" id="mClose">Close</button>
+    </div>
+    <div class="mbody">
+      <div class="g4">
+        <label class="f">Month <select id="rMon"></select></label>
+        <label class="f">Year <select id="rYear"></select></label>
+        <label class="f">Date reviewed <input type="date" id="rDate"></label>
+        <label class="f">Focus <select id="rFocus"></select></label>
+      </div>
+      <div class="ratingrow">
+        <div class="prevbox" id="prevBox"></div>
+        <div><div class="k">Rating</div><div class="starpick" id="rStars"></div></div>
+        <label class="chk"><input type="checkbox" id="rReviewed"> Reviewed</label>
+      </div>
+      <div class="prev" id="prev"><span class="k" id="prevK"></span><span id="prevT"></span></div>
+      <div class="g2">
+        <label class="f">Wins<textarea id="rWins" placeholder="What went well?"></textarea></label>
+        <label class="f">Challenges<textarea id="rChallenges" placeholder="What got in the way?"></textarea></label>
+        <label class="f">Habits / System<textarea id="rHabits" placeholder="Habits or systems built"></textarea></label>
+        <label class="f">Lessons learned<textarea id="rLessons"></textarea></label>
+      </div>
+      <label class="f" style="margin-top:8px">Next month intention<textarea id="rNext"></textarea></label>
+      <div class="actions">
+        <button class="btn warn" type="button" id="mDelete">Delete</button>
+        <span class="spacer"></span>
+        <button class="btn pri" type="button" id="mSave">Save review</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- cover icons: 4 themes x 6 states (0 = unrated, 1..5 = rating) ---- */
+const COVERBG=['var(--lav)','var(--cor)','#FFB07A','var(--yel)','var(--mint)','#8FD9A8'];
+const ST='stroke="#111" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"';
+const DASH='fill="none" stroke="#111" stroke-width="4" stroke-dasharray="6 6" stroke-linecap="round" stroke-linejoin="round"';
+function sv(inner){return '<svg viewBox="0 0 100 100" aria-hidden="true">'+inner+'</svg>';}
+
+/* Weather: storm -> rain -> cloud -> sun behind cloud -> full sun */
+const CLOUD='M26 68H72A14 14 0 0 0 72 40A20 20 0 0 0 34 38A15 15 0 0 0 26 68Z';
+function cloud(fill,tr){return '<g transform="'+(tr||'')+'"><path d="'+CLOUD+'" fill="'+fill+'" '+ST+'/></g>';}
+function rays(cx,cy,r1,r2,n){let s='';for(let i=0;i<n;i++){const a=i*2*Math.PI/n;s+='<path d="M'+(cx+r1*Math.cos(a)).toFixed(1)+' '+(cy+r1*Math.sin(a)).toFixed(1)+'L'+(cx+r2*Math.cos(a)).toFixed(1)+' '+(cy+r2*Math.sin(a)).toFixed(1)+'" '+ST+'/>';}return s;}
+function weather(n){
+  if(n===0)return sv('<path d="'+CLOUD+'" '+DASH+'/>');
+  if(n===1)return sv(cloud('#8a8a99','translate(0,-8)')+'<path d="M52 56L42 74H51L46 90L63 66H54L59 56Z" fill="#FFD976" '+ST+'/>');
+  if(n===2)return sv(cloud('#dfe3ee','translate(0,-8)')+'<path d="M38 66V76M52 70V80M66 66V76" fill="none" stroke="#2f6fdb" stroke-width="4" stroke-linecap="round"/>');
+  if(n===3)return sv(cloud('#fff','translate(0,2)'));
+  if(n===4)return sv(rays(64,34,22,28,8)+'<circle cx="64" cy="34" r="16" fill="#FFD976" '+ST+'/>'+cloud('#fff','translate(-6,10)'));
+  return sv(rays(50,50,30,40,8)+'<circle cx="50" cy="50" r="20" fill="#FFD976" '+ST+'/>');
+}
+
+/* Plant: dry twig -> sprout -> small plant -> bush -> flower */
+const SOIL='<path d="M20 84Q50 64 80 84Z" fill="#b98a5e" '+ST+'/>';
+function leaf(x,y,rot,fill){return '<ellipse cx="'+x+'" cy="'+y+'" rx="11" ry="5.5" transform="rotate('+rot+' '+x+' '+y+')" fill="'+fill+'" stroke="#111" stroke-width="3.5"/>';}
+function plant(n){
+  const G='#6fcf7f';
+  const stem=function(top){return '<path d="M50 74V'+top+'" fill="none" '+ST+'/>';};
+  if(n===0)return sv('<path d="M30 52H70L64 84H36Z" '+DASH+'/>');
+  if(n===1)return sv(SOIL+'<path d="M50 74Q48 60 58 50" fill="none" '+ST+'/>'+leaf(63,56,70,'#b89a62'));
+  if(n===2)return sv(SOIL+stem(58)+leaf(41,58,-25,G)+leaf(59,58,25,G));
+  if(n===3)return sv(SOIL+stem(40)+leaf(40,62,-25,G)+leaf(60,62,25,G)+leaf(41,48,-25,G)+leaf(59,48,25,G));
+  if(n===4)return sv(SOIL+stem(32)+leaf(38,66,-25,G)+leaf(62,66,25,G)+leaf(39,54,-25,G)+leaf(61,54,25,G)+leaf(40,42,-25,G)+leaf(60,42,25,G));
+  let petals='';for(let i=0;i<5;i++){const a=i*2*Math.PI/5-Math.PI/2;petals+='<circle cx="'+(50+11*Math.cos(a)).toFixed(1)+'" cy="'+(28+11*Math.sin(a)).toFixed(1)+'" r="8" fill="#FF8A78" stroke="#111" stroke-width="3.5"/>';}
+  return sv(SOIL+stem(34)+leaf(39,66,-25,G)+leaf(61,66,25,G)+leaf(40,52,-25,G)+leaf(60,52,25,G)+petals+'<circle cx="50" cy="28" r="7" fill="#FFD976" stroke="#111" stroke-width="3.5"/>');
+}
+
+/* Moon: new -> crescent -> half -> gibbous -> full */
+function moon(n){
+  const DK='#3c3c4a',LT='#FFF7D6';
+  if(n===0)return sv('<circle cx="50" cy="50" r="30" '+DASH+'/>');
+  if(n===1)return sv('<circle cx="50" cy="50" r="30" fill="'+DK+'" '+ST+'/>');
+  if(n===5)return sv('<circle cx="50" cy="50" r="30" fill="'+LT+'" '+ST+'/><path d="M20 24l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM80 70l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="#111"/>');
+  const lit={2:'M50 20A30 30 0 0 1 50 80A18 30 0 0 0 50 20Z',3:'M50 20A30 30 0 0 1 50 80Z',4:'M50 20A30 30 0 0 1 50 80A18 30 0 0 1 50 20Z'}[n];
+  return sv('<circle cx="50" cy="50" r="30" fill="'+DK+'"/><path d="'+lit+'" fill="'+LT+'"/><circle cx="50" cy="50" r="30" fill="none" '+ST+'/>');
+}
+
+/* Battery: 1..5 bars charging up */
+function battery(n){
+  if(n===0)return sv('<rect x="20" y="32" width="52" height="36" rx="4" '+DASH+'/><rect x="72" y="43" width="7" height="14" '+DASH+'/>');
+  const cols=['','#FF8A78','#FFB07A','#FFD976','#B9E7A5','#8FD9A8'];
+  let bars='';for(let i=0;i<n;i++)bars+='<rect x="'+(25+i*8.6).toFixed(1)+'" y="37" width="6.4" height="26" fill="'+cols[n]+'" stroke="#111" stroke-width="2.5"/>';
+  return sv('<rect x="20" y="32" width="52" height="36" rx="4" fill="#fff" '+ST+'/><rect x="72" y="43" width="7" height="14" fill="#111"/>'+bars);
+}
+
+/* ---- Eclipse cover, Notes Desk style: thick ink outlines, hard offset shadows, dotted panel.
+   1-2 moon (lavender), 3-4 sun (yellow), 5 blood moon eclipse (coral) ---- */
+const THEMEBG={Eclipse:['#FBFAF6','#CBBDF8','#CBBDF8','#FFD976','#FFD976','#FF8A78']};
+function BG(theme,n){const t=THEMEBG[theme];return t?t[n]:COVERBG[n];}
+const SHD='#11111130';
+function shp(geo,fill,sw,extra){return '<g transform="translate(3 3)" fill="'+SHD+'" stroke="none">'+geo+'</g><g fill="'+fill+'" stroke="#111" stroke-width="'+sw+'" stroke-linejoin="round" stroke-linecap="round" '+(extra||'')+'>'+geo+'</g>';}
+function bars(cx,cy,r1,r2,n,w,off){let g='';for(let i=0;i<n;i++){const a=i*2*Math.PI/n+(off||0);g+='<path d="M'+(cx+r1*Math.cos(a)).toFixed(1)+' '+(cy+r1*Math.sin(a)).toFixed(1)+'L'+(cx+r2*Math.cos(a)).toFixed(1)+' '+(cy+r2*Math.sin(a)).toFixed(1)+'"/>';}
+  return '<g transform="translate(3 3)" fill="none" stroke="'+SHD+'" stroke-width="'+w+'">'+g+'</g><g fill="none" stroke="#111" stroke-width="'+w+'">'+g+'</g>';}
+function spark(x,y,s){return '<path d="M'+x+' '+(y-s)+'Q'+x+' '+y+' '+(x+s)+' '+y+'Q'+x+' '+y+' '+x+' '+(y+s)+'Q'+x+' '+y+' '+(x-s)+' '+y+'Q'+x+' '+y+' '+x+' '+(y-s)+'Z" fill="#111"/>';}
+function orbits(){return '<circle cx="50" cy="50" r="39" fill="none" stroke="#111" stroke-width="1.6" stroke-dasharray="5 4"/><circle cx="50" cy="50" r="46" fill="none" stroke="#111" stroke-width="1.6" stroke-dasharray="5 4"/>';}
+function eclipse(n){
+  if(n===0)return sv('<circle cx="50" cy="50" r="26" fill="none" stroke="#111" stroke-opacity=".45" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/>');
+  if(n<=2){
+    const inner=n===1?24:12;
+    return sv(orbits()+'<g transform="rotate(135 50 50)">'+shp('<path d="M50 20A30 30 0 0 1 50 80A'+inner+' 30 0 0 0 50 20Z"/>','#FBFAF6',3.2)+'</g>'+spark(18,30,5)+spark(80,26,4)+spark(82,72,3.5)+spark(26,78,3));
+  }
+  if(n<=4){
+    const big=n===4, r=big?21:17;
+    const rays=bars(50,50,r+9,r+19,8,5)+(big?bars(50,50,r+9,r+14,8,3.5,Math.PI/8):'');
+    return sv(rays+shp('<circle cx="50" cy="50" r="'+r+'"/>','#FF8A78',3.5)+'<circle cx="50" cy="50" r="'+(r*0.42).toFixed(1)+'" fill="#FFD976" stroke="#111" stroke-width="2.5"/><circle cx="50" cy="50" r="2.8" fill="#111"/>');
+  }
+  return sv(orbits()+shp('<circle cx="50" cy="50" r="27"/>','#C93A34',3.5)+'<g transform="rotate(135 50 50)"><path d="M50 24A26 26 0 0 1 50 76A21 26 0 0 0 50 24Z" fill="#FFD9A8"/></g>'+spark(18,30,5)+spark(80,26,4)+spark(82,72,3.5)+spark(26,78,3));
+}
+
+const THEMES={Eclipse:eclipse,Weather:weather,Plant:plant,Moon:moon,Battery:battery};
+function ICON(theme,n){return (THEMES[theme]||eclipse)(n);}
+
+(function(){
+const KEY='monthlyReview.v1', TKEY='monthlyReview.theme';
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const PALETTE=['var(--mint)','var(--yel)','var(--lav)','var(--sky)','var(--cor)'];
+const $=id=>document.getElementById(id);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function curMonth(){return todayStr().slice(0,7);}
+function monthTitle(m){const p=m.split('-');return MON[(+p[1]||1)-1]+' '+p[0];}
+function prevMonth(m){const p=m.split('-').map(Number);let y=p[0],mo=p[1]-1;if(mo<1){mo=12;y--;}return y+'-'+pad(mo);}
+
+let THEME='Eclipse';
+try{const t=localStorage.getItem(TKEY);if(t&&THEMES[t])THEME=t;}catch(e){}
+$('themeSel').innerHTML=Object.keys(THEMES).map(t=>`<option value="${t}">Cover: ${t}</option>`).join('');
+$('themeSel').value=THEME;
+$('themeSel').addEventListener('change',e=>{THEME=e.target.value;try{localStorage.setItem(TKEY,THEME);}catch(x){}render();});
+
+/* ---------- data ---------- */
+function blank(month){return {id:uid(),month,date:'',rating:0,focus:'',wins:'',challenges:'',habits:'',lessons:'',next:'',reviewed:false,created:Date.now()};}
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.reviews))return d;}catch(e){}
+  return {reviews:[]};
+}
+let S=load();
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));}
+  catch(e){alert('Could not save. Browser storage is full; export a backup.');}
+}
+const FOCI=['Monetory','Expressitory','Motoritory'];
+const FOCUSBG={Monetory:'var(--mint)',Expressitory:'#BDF2F5',Motoritory:'linear-gradient(90deg,#F6B3B3 50%,#fff 50%)'};
+function focusColor(f){return FOCUSBG[f]||'var(--lav)';}
+function fillFocus(cur){const list=FOCI.concat(cur&&!FOCI.includes(cur)?[cur]:[]);
+  $('rFocus').innerHTML='<option value="">None</option>'+list.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');$('rFocus').value=cur||'';}
+fillFocus('');
+function starsHTML(n){let s='';for(let i=1;i<=5;i++)s+=`<span class="${i<=n?'':'off'}">&#9733;</span>`;return `<span class="stars">${s}</span>`;}
+
+/* ---------- gallery ---------- */
+let RF='All',Q='';
+const CY=new Date().getFullYear();
+let YEAR=CY;
+try{const y=+localStorage.getItem('monthlyReview.year');if(y>1900&&y<2200)YEAR=y;}catch(e){}
+function setYear(y){YEAR=y;try{localStorage.setItem('monthlyReview.year',String(y));}catch(e){}render();}
+function yearBounds(){let lo=CY-5,hi=CY+2;S.reviews.forEach(r=>{const y=+r.month.slice(0,4);if(y<lo)lo=y;if(y>hi)hi=y;});if(YEAR<lo)lo=YEAR;if(YEAR>hi)hi=YEAR;return [lo,hi];}
+function fit(){
+  const w=document.querySelector('.wrap');if(!w)return;
+  w.style.zoom=1;
+  const nat=w.offsetHeight+6;
+  let z=Math.min((window.innerWidth-28)/1266,1.2);
+  if(!Q)z=Math.min(z,(window.innerHeight-34)/nat);
+  w.style.zoom=Math.max(.4,z);
+}
+window.addEventListener('resize',()=>fit());
+let FF='';
+function matches(r){
+  if(!(RF==='All'||(RF==='Reviewed'?r.reviewed:!r.reviewed)))return false;
+  if(FF&&r.focus!==FF)return false;
+  return !Q||[r.wins,r.challenges,r.habits,r.lessons,r.next,r.focus,monthTitle(r.month)].join(' ').toLowerCase().includes(Q);
+}
+function cardHTML(r,dim){
+  const now=r.month===curMonth();
+  return `<article class="card rcard${dim?' dim':''}${now?' now':''}" data-r="${r.id}">
+      <div class="rc" style="background-color:${BG(THEME,r.rating)}">${r.focus?`<span class="tag fotag" style="background:${focusColor(r.focus)}">${esc(r.focus)}</span>`:''}${now?'<span class="tag nowtag">Now</span>':''}${ICON(THEME,r.rating)}</div>
+      <div class="rb"><div class="top"><h3>${monthTitle(r.month)}</h3>${starsHTML(r.rating)}</div>
+        <div class="chips">
+          <span class="tag mini" style="background:${r.reviewed?'#7DB3FF':'#fff'}">${r.reviewed?'Reviewed':'Pending'}</span>
+        </div></div></article>`;
+}
+function ghostHTML(m,dim){
+  const now=m===curMonth();
+  return `<article class="card rcard ghost${dim?' dim':''}${now?' now':''}" data-m="${m}">
+      <div class="rc">${now?'<span class="tag nowtag">Now</span>':''}<span class="plus">+</span></div>
+      <div class="rb"><div class="top"><h3>${monthTitle(m)}</h3>${starsHTML(0)}</div>
+        <div class="chips"><span class="tag mini" style="background:#fff">Empty</span></div></div></article>`;
+}
+function summaryHTML(list){
+  const rated=list.filter(r=>r.rating>0);
+  if(!rated.length)return `<div class="card ysum"><div class="ysT">${YEAR} SUMMARY</div><div class="ysN">No ratings yet. Rate a month and the summary fills in.</div></div>`;
+  const avg=(rated.reduce((t,r)=>t+r.rating,0)/rated.length).toFixed(1);
+  let best=rated[0],worst=rated[0];
+  rated.forEach(r=>{if(r.rating>best.rating)best=r;if(r.rating<worst.rating)worst=r;});
+  const mn=r=>MON[+r.month.slice(5,7)-1];
+  const foc=FOCI.map(f=>`<span class="tag mini" style="background:${focusColor(f)}">${f} ${list.filter(r=>r.focus===f).length}</span>`).join('');
+  let bars='',lets='';
+  for(let i=1;i<=12;i++){
+    const r=list.find(x=>x.month===YEAR+'-'+pad(i)), v=r?r.rating:0;
+    bars+=`<div class="tb${v?'':' z'}" style="height:${v?v*6:3}px;${v?'background:'+BG(THEME,v):''}" title="${MON[i-1]}: ${v?v+' star'+(v>1?'s':''):'not rated'}"></div>`;
+    lets+=`<span>${MON[i-1][0]}</span>`;
+  }
+  return `<div class="card ysum"><div class="ysT">${YEAR} SUMMARY</div>
+    <div class="ysrow">
+      <div class="ysb"><b>${avg}</b><span>AVG &#9733;</span></div>
+      <div class="ysb"><b>${mn(best)}</b><span>BEST &middot; ${best.rating}&#9733;</span></div>
+      <div class="ysb"><b>${mn(worst)}</b><span>LOWEST &middot; ${worst.rating}&#9733;</span></div>
+      <div class="ysf">${foc}</div>
+      <div class="ystr"><div class="trend">${bars}</div><div class="trl">${lets}</div></div>
+    </div></div>`;
+}
+function render(){
+  $('filter').innerHTML=['All','Reviewed','Pending'].map(s=>`<span class="chip ${RF===s?'on':''}" data-rf="${s}">${s}</span>`).join('');
+  $('ffilter').innerHTML=['',...FOCI].map(f=>`<span class="chip ${FF===f?'on':''}" data-ff="${f}">${f||'Any focus'}</span>`).join('');
+  const done=S.reviews.filter(r=>r.reviewed).length;
+  $('count').textContent='REVIEWED '+pad(done)+' / '+pad(S.reviews.length);
+  const searching=!!Q;
+  $('pager').style.display=searching?'none':'flex';
+  if(searching){
+    const a=S.reviews.filter(matches).sort((x,y)=>y.month.localeCompare(x.month));
+    $('ysum').innerHTML=`<div class="card ysum"><div class="ysT">SEARCH &middot; ALL YEARS</div><div class="ysN">${a.length} match${a.length===1?'':'es'} for &ldquo;${esc(Q)}&rdquo;</div></div>`;
+    $('gallery').innerHTML=a.length?a.map(r=>cardHTML(r,false)).join(''):`<div class="card empty"><div class="big">Nothing matches</div><p>Try another word or clear the filters.</p></div>`;
+    fit();return;
+  }
+  const filtering=RF!=='All'||!!FF;
+  const list=S.reviews.filter(r=>r.month.slice(0,4)===String(YEAR));
+  $('ysum').innerHTML=summaryHTML(list);
+  let cards='',yDone=0;
+  for(let i=1;i<=12;i++){
+    const m=YEAR+'-'+pad(i), r=list.find(x=>x.month===m);
+    if(r){if(r.reviewed)yDone++;cards+=cardHTML(r,filtering&&!matches(r));}
+    else cards+=ghostHTML(m,filtering);
+  }
+  $('gallery').innerHTML=cards;
+  const [lo,hi]=yearBounds();let o='';for(let y=hi;y>=lo;y--)o+=`<option${y===YEAR?' selected':''}>${y}</option>`;
+  $('yearSel').innerHTML=o;
+  $('yearInfo').textContent='REVIEWED '+pad(yDone)+' / 12';
+  fit();
+}
+$('filter').addEventListener('click',e=>{const s=e.target.dataset.rf;if(s){RF=s;render();}});
+$('ffilter').addEventListener('click',e=>{const f=e.target.dataset.ff;if(f!==undefined){FF=(FF===f?'':f);render();}});
+$('q').addEventListener('input',e=>{Q=e.target.value.toLowerCase();render();});
+$('gallery').addEventListener('click',e=>{const c=e.target.closest('.rcard');if(!c)return;if(c.dataset.r)openReview(c.dataset.r);else openReview(null,c.dataset.m);});
+$('newReview').addEventListener('click',()=>openReview(null,YEAR===CY?curMonth():YEAR+'-01'));
+$('prevYear').addEventListener('click',()=>setYear(YEAR-1));
+$('nextYear').addEventListener('click',()=>setYear(YEAR+1));
+$('yearSel').addEventListener('change',e=>setYear(+e.target.value));
+
+/* ---------- modal ---------- */
+let rv=null;
+$('rMon').innerHTML=MON.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+function fillYears(sel){
+  const cy=new Date().getFullYear();
+  let lo=cy-5,hi=cy+1;
+  S.reviews.forEach(r=>{const y=+r.month.slice(0,4);if(y<lo)lo=y;if(y>hi)hi=y;});
+  if(sel){const y=+sel.slice(0,4);if(y<lo)lo=y;if(y>hi)hi=y;}
+  let o='';for(let y=hi;y>=lo;y--)o+=`<option>${y}</option>`;
+  $('rYear').innerHTML=o;
+}
+function setMonthCtl(m){fillYears(m);$('rMon').value=String(+m.slice(5,7));$('rYear').value=m.slice(0,4);}
+function getMonthCtl(){return $('rYear').value+'-'+pad(+$('rMon').value);}
+function grow(t){t.style.height='auto';t.style.height=Math.min(150,Math.max(46,t.scrollHeight))+'px';}
+document.querySelectorAll('#modal textarea').forEach(t=>t.addEventListener('input',()=>grow(t)));
+function showPrev(month){
+  const p=S.reviews.find(r=>r.month===prevMonth(month));
+  if(p&&p.next){$('prevK').textContent=monthTitle(p.month)+' intention:';$('prevT').textContent=p.next;$('prev').classList.add('show');}
+  else $('prev').classList.remove('show');
+}
+function openReview(id,month){
+  const base=id?S.reviews.find(r=>r.id===id):null;
+  rv=base?JSON.parse(JSON.stringify(base)):Object.assign(blank(month||curMonth()),{id:null,date:todayStr()});
+  $('mTag').textContent=base?monthTitle(rv.month):'New review';
+  setMonthCtl(rv.month);$('rDate').value=rv.date||'';fillFocus(rv.focus||'');
+  $('rWins').value=rv.wins||'';$('rChallenges').value=rv.challenges||'';$('rHabits').value=rv.habits||'';
+  $('rLessons').value=rv.lessons||'';$('rNext').value=rv.next||'';$('rReviewed').checked=!!rv.reviewed;
+  $('mDelete').style.display=base?'inline-block':'none';
+  drawStars();showPrev(rv.month);
+  $('modal').classList.add('show');document.body.style.overflow='hidden';$('modal').scrollTop=0;
+  document.querySelectorAll('#modal textarea').forEach(grow);
+}
+function closeModal(){$('modal').classList.remove('show');document.body.style.overflow='';rv=null;}
+function drawStars(){
+  $('rStars').innerHTML=[1,2,3,4,5].map(i=>`<button type="button" class="${i<=rv.rating?'on':''}" data-s="${i}" title="${i} star${i>1?'s':''}">&#9733;</button>`).join('');
+  $('prevBox').style.backgroundColor=BG(THEME,rv.rating);$('prevBox').innerHTML=ICON(THEME,rv.rating);
+}
+$('rStars').addEventListener('click',e=>{const s=+e.target.dataset.s;if(!s)return;rv.rating=(rv.rating===s)?0:s;drawStars();});
+$('rMon').addEventListener('change',()=>showPrev(getMonthCtl()));
+$('rYear').addEventListener('change',()=>showPrev(getMonthCtl()));
+$('mClose').addEventListener('click',closeModal);
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+$('mSave').addEventListener('click',()=>{
+  const month=getMonthCtl();
+  if(S.reviews.some(r=>r.month===month&&r.id!==rv.id)){alert('A review for '+monthTitle(month)+' already exists. Open that one instead.');return;}
+  const data={month,date:$('rDate').value,rating:rv.rating,focus:$('rFocus').value.trim(),
+    wins:$('rWins').value.trim(),challenges:$('rChallenges').value.trim(),habits:$('rHabits').value.trim(),
+    lessons:$('rLessons').value.trim(),next:$('rNext').value.trim(),reviewed:$('rReviewed').checked};
+  if(data.reviewed&&!data.date)data.date=todayStr();
+  if(rv.id){const r=S.reviews.find(x=>x.id===rv.id);if(r)Object.assign(r,data);}
+  else S.reviews.push(Object.assign(blank(month),data));
+  save();closeModal();YEAR=+month.slice(0,4);try{localStorage.setItem('monthlyReview.year',String(YEAR));}catch(x){}render();
+});
+$('mDelete').addEventListener('click',()=>{
+  if(!rv||!rv.id)return;
+  if(!confirm('Delete the '+monthTitle(rv.month)+' review?'))return;
+  const id=rv.id;const card=document.querySelector('.rcard[data-r="'+id+'"]');
+  closeModal();
+  if(card)card.classList.add('pop');
+  setTimeout(()=>{S.reviews=S.reviews.filter(r=>r.id!==id);save();render();},card?280:0);
+});
+
+/* ---------- backup + keys ---------- */
+$('exportBtn').addEventListener('click',()=>{
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='monthly-review-backup-'+todayStr()+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+});
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const d=JSON.parse(r.result);if(!Array.isArray(d.reviews))throw 0;
+    if(!confirm('Replace all reviews with this backup?'))return;
+    S=d;save();render();
+  }catch(x){alert('That file is not a Monthly Review backup.');}};
+  r.readAsText(f);e.target.value='';
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&$('modal').classList.contains('show'))closeModal();
+  if(e.ctrlKey&&e.code==='Space'){e.preventDefault();openReview(null,YEAR===CY?curMonth():YEAR+'-01');}
+  const t=e.target.tagName,open=$('modal').classList.contains('show');
+  if(!open&&t!=='INPUT'&&t!=='TEXTAREA'&&t!=='SELECT'){
+    if(e.key==='ArrowLeft')setYear(YEAR-1);
+    if(e.key==='ArrowRight')setYear(YEAR+1);
+  }
+});
+render();
+})();
+</script>
+</body>
+</html>
